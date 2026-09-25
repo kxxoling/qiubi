@@ -1,0 +1,37 @@
+name: Bug 报告
+description: 报告一个 bug
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: 问题描述
+      description: 清楚地描述遇到的问题
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      description: 列出复现该问题的步骤
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望行为
+      description: 描述你期望发生的行为
+    validations:
+      required: true
+  - type: input
+    id: qbt-version
+    attributes:
+      label: qBittorrent 版本
+      description: 如 5.0.0
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: 浏览器
+      description: 如 Chrome 126

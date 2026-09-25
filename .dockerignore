@@ -1,0 +1,36 @@
+# Version control & CI
+.git/
+.github/
+
+# Build artifacts (rebuilt inside the image)
+dist/
+.vite/
+
+# Dependencies (reinstalled inside the image)
+node_modules/
+
+# Tests (not needed in the image)
+src/__tests__/
+playwright-report/
+test-results/
+e2e/
+
+# Dev tool configs
+*.md
+.env*
+.eslint*
+.prettier*
+biome.json*
+.husky/
+.vscode/
+
+
+
+
+
+# Misc
+*.log
+*.tmp
+.DS_Store
+bun.lockb
+docs/

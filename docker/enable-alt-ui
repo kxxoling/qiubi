@@ -1,0 +1,22 @@
+#!/usr/bin/with-contenv bash
+# After qBT starts, switch the Web UI from the bundled default to qiubi.
+# qBT 5.x turns the alternative-UI setting back off on startup, so this runs
+# on every boot. The loopback-only auth whitelist (written by init-qiubi.sh,
+# reachable only from inside the container) lets it call the API without
+# credentials — external clients always still need to log in.
+BASE="http://127.0.0.1:${WEBUI_PORT:-8080}"
+
+until curl -s -o /dev/null --max-time 2 "$BASE/" || [ $((++n)) -ge 60 ]; do
+  sleep 1
+done
+
+curl -s -o /dev/null -d 'json={"alternative_webui_enabled":false}' "$BASE/api/v2/app/setPreferences"
+sleep 1
+curl -s -o /dev/null -d 'json={"alternative_webui_enabled":true,"alternative_webui_path":"/web/qiubi"}' "$BASE/api/v2/app/setPreferences"
+sleep 1
+curl -s --max-time 5 "$BASE/" | grep -q "<title>qiubi" \
+  && echo "[enable-alt-ui] qiubi is serving ($BASE)" \
+  || echo "[enable-alt-ui] homepage is not qiubi; check /web/qiubi/public/"
+
+# s6 longrun must stay alive
+exec sleep 2147483647

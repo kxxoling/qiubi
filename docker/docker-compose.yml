@@ -1,0 +1,16 @@
+services:
+  qiubi:
+    image: ghcr.io/kxxoling/qiubi:latest
+    container_name: qiubi
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Shanghai
+      - WEBUI_PORT=8080
+    volumes:
+      - ./data:/config
+    ports:
+      - "8080:8080"
+      - "6881:6881"
+      - "6881:6881/udp"
+    restart: unless-stopped

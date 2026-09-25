@@ -1,0 +1,61 @@
+name: Pages Demo
+
+# Auto-deploy the demo site on push to main (MSW mock server, purely static,
+# no real qBT needed):
+#   https://<owner>.github.io/<repo>/
+# Not active for private repos (GitHub Pages requires a public repo or a paid plan);
+# once the repo goes public it deploys on push with no changes needed.
+# For first use, set Settings → Pages → Source to GitHub Actions.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    # Skip for private repos (deployment fails because Pages isn't enabled)
+    if: ${{ github.event.repository.private != true }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Cache bun
+        uses: actions/cache@v6
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
+
+      - run: bun install --frozen-lockfile
+
+      - name: Build demo bundle
+        # Relative base: works when served from any subpath (e.g. GitHub Pages /<repo>/)
+        run: bunx tsc -b && bun run build:demo
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist-demo
+
+  deploy:
+    if: ${{ github.event.repository.private != true }}
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

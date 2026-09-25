@@ -1,0 +1,19 @@
+node_modules/
+dist/
+.vite/
+*.local
+.env
+.env.*
+!.env.example
+playwright-report/
+test-results/
+*.tsbuildinfo
+__pycache__/
+dist-demo/
+
+# plasmo extension build artifacts
+.plasmo/
+.plasmo-gen/
+build/
+public/app/
+.ext-app/

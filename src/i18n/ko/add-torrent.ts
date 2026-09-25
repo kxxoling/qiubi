@@ -1,0 +1,33 @@
+// Add-torrent dialog — links, local files, per-torrent options, result toasts.
+import type { Dictionary } from "@/i18n/types";
+
+export default {
+  "Add Torrent": "새 다운로드",
+  "Add from URL": "URL에서 추가",
+  "Add from Magnet": "마그넷에서 추가",
+  "Add from File": "파일에서 추가",
+  Links: "링크",
+  "Magnet, URL or infohash — one per line": "마그넷·URL·infohash를 한 줄에 하나씩",
+  "Links (magnet / URL / infohash, one per line)": "링크(마그넷 / URL / infohash, 한 줄에 하나)",
+  "Torrent files": "토렌트 파일",
+  "Click to choose or drop .torrent files": "클릭하여 .torrent 파일 선택 또는 끌어다 놓기",
+  "Choose or drop .torrent files": ".torrent 파일을 선택하거나 끌어다 놓으세요",
+  "files selected": "개 파일 선택됨",
+  "Only .torrent files are supported": ".torrent 파일만 지원됩니다",
+  "Select files to download": "다운로드할 파일 선택",
+  "Toggle all": "모두 전환",
+  "(multiple select supported)": "(다중 선택 가능)",
+  "Download Directory": "다운로드 폴더",
+  "Create subfolder": "하위 폴더 만들기",
+  "Skip hash check": "해시 확인 건너뛰기",
+  "Do not start download automatically": "자동으로 다운로드 시작하지 않음",
+  "Original name": "원래 이름",
+  Cookie: "쿠키",
+  "Download Limit": "다운로드 제한",
+  "Upload Limit": "업로드 제한",
+  "Share Ratio Limit": "공유 비율 제한",
+  "Seeding Time Limit": "시딩 시간 제한",
+  "Torrent already exists": "토렌트가 이미 존재합니다",
+  "Added successfully": "추가했습니다",
+  "Torrent added": "토렌트가 추가되었습니다",
+} satisfies Dictionary;

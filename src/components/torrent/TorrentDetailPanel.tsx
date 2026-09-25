@@ -1,0 +1,1 @@
+export { TorrentDetailPanel } from "./detail";

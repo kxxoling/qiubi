@@ -1,0 +1,750 @@
+@import "tailwindcss";
+/* animate-in/out + fade/zoom/slide utilities used by the ui/ components'
+   data-open / data-closed classes — without this import those classes
+   generate no CSS and dialogs/popovers appear with no animation */
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* base-nova 组件库依赖的状态变体(与 shadcn/dist/tailwind.css 保持一致)。
+ * 缺失时 data-horizontal:flex-col / data-active:bg-* 等类不会生成对应选择器,
+ * 典型症状:Tabs 变横向排列、tab 选中态无背景、弹窗无开关动画。 */
+@custom-variant data-open (
+  &:where([data-state="open"]),
+  &:where([data-open]:not([data-open="false"]))
+);
+@custom-variant data-closed (
+  &:where([data-state="closed"]),
+  &:where([data-closed]:not([data-closed="false"]))
+);
+@custom-variant data-checked (
+  &:where([data-state="checked"]),
+  &:where([data-checked]:not([data-checked="false"]))
+);
+@custom-variant data-unchecked (
+  &:where([data-state="unchecked"]),
+  &:where([data-unchecked]:not([data-unchecked="false"]))
+);
+@custom-variant data-selected (&:where([data-selected="true"]));
+@custom-variant data-disabled (
+  &:where([data-disabled="true"]),
+  &:where([data-disabled]:not([data-disabled="false"]))
+);
+@custom-variant data-active (
+  &:where([data-state="active"]),
+  &:where([data-active]:not([data-active="false"]))
+);
+@custom-variant data-horizontal (&:where([data-orientation="horizontal"]));
+@custom-variant data-vertical (&:where([data-orientation="vertical"]));
+
+@theme {
+  --color-background: hsl(0 0% 100%);
+  --color-foreground: hsl(222.2 84% 4.9%);
+  --color-card: hsl(0 0% 100%);
+  --color-card-foreground: hsl(222.2 84% 4.9%);
+  --color-popover: hsl(0 0% 100%);
+  --color-popover-foreground: hsl(222.2 84% 4.9%);
+  --color-primary: hsl(221.2 83.2% 53.3%);
+  --color-primary-foreground: hsl(210 40% 98%);
+  --color-secondary: hsl(210 40% 96.1%);
+  --color-secondary-foreground: hsl(222.2 47.4% 11.2%);
+  --color-muted: hsl(210 40% 96.1%);
+  --color-muted-foreground: hsl(215.4 16.3% 46.9%);
+  --color-accent: hsl(210 40% 96.1%);
+  --color-accent-foreground: hsl(222.2 47.4% 11.2%);
+  --color-destructive: hsl(0 84.2% 60.2%);
+  --color-destructive-foreground: hsl(210 40% 98%);
+  --color-border: hsl(214.3 31.8% 91.4%);
+  --color-input: hsl(214.3 31.8% 91.4%);
+  --color-ring: hsl(221.2 83.2% 53.3%);
+  --radius-sm: calc(0.5rem - 4px);
+  --radius-md: calc(0.5rem - 2px);
+  --radius-lg: 0.5rem;
+  --radius-xl: calc(0.5rem + 4px);
+}
+
+.dark {
+  --color-background: hsl(222.2 84% 4.9%);
+  --color-foreground: hsl(210 40% 98%);
+  --color-card: hsl(222.2 84% 4.9%);
+  --color-card-foreground: hsl(210 40% 98%);
+  --color-popover: hsl(222.2 84% 4.9%);
+  --color-popover-foreground: hsl(210 40% 98%);
+  --color-primary: hsl(217.2 91.2% 59.8%);
+  --color-primary-foreground: hsl(222.2 47.4% 11.2%);
+  --color-secondary: hsl(217.2 32.6% 17.5%);
+  --color-secondary-foreground: hsl(210 40% 98%);
+  --color-muted: hsl(217.2 32.6% 17.5%);
+  --color-muted-foreground: hsl(215 20.2% 65.1%);
+  --color-accent: hsl(217.2 32.6% 17.5%);
+  --color-accent-foreground: hsl(210 40% 98%);
+  --color-destructive: hsl(0 62.8% 30.6%);
+  --color-destructive-foreground: hsl(210 40% 98%);
+  --color-border: hsl(217.2 32.6% 17.5%);
+  --color-input: hsl(217.2 32.6% 17.5%);
+  --color-ring: hsl(224.3 76.3% 48%);
+}
+
+/*
+ * 颜色主题(与 Dark/Light 正交):html 上挂 data-theme,配合 .dark 使用。
+ * 取值参考 ShadCN 官方主题库(themes.shadcn.com)的 HSL 变量。
+ * 优先级:.dark[data-theme="x"](0,2,0) > [data-theme="x"](0,1,0) = .dark(0,1,0),
+ * 因此 dark 变体必须用 .dark[data-theme] 定义。
+ */
+
+/* --- zinc(无彩色灰阶) --- */
+[data-theme="zinc"] {
+  --color-background: hsl(0 0% 100%);
+  --color-foreground: hsl(240 10% 3.9%);
+  --color-card: hsl(0 0% 100%);
+  --color-card-foreground: hsl(240 10% 3.9%);
+  --color-popover: hsl(0 0% 100%);
+  --color-popover-foreground: hsl(240 10% 3.9%);
+  --color-primary: hsl(240 5.9% 10%);
+  --color-primary-foreground: hsl(0 0% 98%);
+  --color-secondary: hsl(240 4.8% 95.9%);
+  --color-secondary-foreground: hsl(240 5.9% 10%);
+  --color-muted: hsl(240 4.8% 95.9%);
+  --color-muted-foreground: hsl(240 3.8% 46.1%);
+  --color-accent: hsl(240 4.8% 95.9%);
+  --color-accent-foreground: hsl(240 5.9% 10%);
+  --color-destructive: hsl(0 84.2% 60.2%);
+  --color-destructive-foreground: hsl(0 0% 98%);
+  --color-border: hsl(240 5.9% 90%);
+  --color-input: hsl(240 5.9% 90%);
+  --color-ring: hsl(240 5.9% 10%);
+}
+.dark[data-theme="zinc"] {
+  --color-background: hsl(240 10% 3.9%);
+  --color-foreground: hsl(0 0% 98%);
+  --color-card: hsl(240 10% 3.9%);
+  --color-card-foreground: hsl(0 0% 98%);
+  --color-popover: hsl(240 10% 3.9%);
+  --color-popover-foreground: hsl(0 0% 98%);
+  --color-primary: hsl(0 0% 98%);
+  --color-primary-foreground: hsl(240 5.9% 10%);
+  --color-secondary: hsl(240 3.7% 15.9%);
+  --color-secondary-foreground: hsl(0 0% 98%);
+  --color-muted: hsl(240 3.7% 15.9%);
+  --color-muted-foreground: hsl(240 5% 64.9%);
+  --color-accent: hsl(240 3.7% 15.9%);
+  --color-accent-foreground: hsl(0 0% 98%);
+  --color-destructive: hsl(0 62.8% 30.6%);
+  --color-destructive-foreground: hsl(0 0% 98%);
+  --color-border: hsl(240 3.7% 15.9%);
+  --color-input: hsl(240 3.7% 15.9%);
+  --color-ring: hsl(240 4.9% 83.9%);
+}
+
+/* --- blue(默认,与无 data-theme 的基础变量一致) --- */
+[data-theme="blue"] {
+  --color-background: oklch(97% 0.014 254.604);
+  --color-foreground: oklch(28.2% 0.091 267.935);
+  --color-card: oklch(97% 0.014 254.604);
+  --color-card-foreground: oklch(28.2% 0.091 267.935);
+  --color-popover: oklch(97% 0.014 254.604);
+  --color-popover-foreground: oklch(28.2% 0.091 267.935);
+  --color-primary: oklch(48.8% 0.243 264.376);
+  --color-primary-foreground: oklch(97% 0.014 254.604);
+  --color-secondary: oklch(93.2% 0.032 255.585);
+  --color-secondary-foreground: oklch(37.9% 0.146 265.522);
+  --color-muted: oklch(93.2% 0.032 255.585);
+  --color-muted-foreground: oklch(0.50 0.04 262.881);
+  --color-accent: oklch(93.2% 0.032 255.585);
+  --color-accent-foreground: oklch(37.9% 0.146 265.522);
+  --color-destructive: oklch(50.5% 0.213 27.518);
+  --color-destructive-foreground: oklch(97.1% 0.013 17.38);
+  --color-border: oklch(88.2% 0.059 254.128);
+  --color-input: oklch(88.2% 0.059 254.128);
+  --color-ring: oklch(70.7% 0.165 254.624);
+}
+.dark[data-theme="blue"] {
+  --color-background: oklch(28.2% 0.091 267.935);
+  --color-foreground: oklch(97% 0.014 254.604);
+  --color-card: oklch(37.9% 0.146 265.522);
+  --color-card-foreground: oklch(97% 0.014 254.604);
+  --color-popover: oklch(37.9% 0.146 265.522);
+  --color-popover-foreground: oklch(97% 0.014 254.604);
+  --color-primary: oklch(54.6% 0.245 262.881);
+  --color-primary-foreground: oklch(97% 0.014 254.604);
+  --color-secondary: oklch(42.4% 0.199 265.638);
+  --color-secondary-foreground: oklch(93.2% 0.032 255.585);
+  --color-muted: oklch(42.4% 0.199 265.638);
+  --color-muted-foreground: oklch(0.771 0.107 236.962);
+  --color-accent: oklch(42.4% 0.199 265.638);
+  --color-accent-foreground: oklch(93.2% 0.032 255.585);
+  --color-destructive: oklch(63.7% 0.237 25.331);
+  --color-destructive-foreground: oklch(97.1% 0.013 17.38);
+  --color-border: oklch(42.4% 0.199 265.638);
+  --color-input: oklch(42.4% 0.199 265.638);
+  --color-ring: oklch(62.3% 0.214 259.815);
+}
+
+
+/* --- emerald --- */
+[data-theme="emerald"] {
+  --color-background: oklch(97.9% 0.021 166.113);
+  --color-foreground: oklch(26.2% 0.051 172.552);
+  --color-card: oklch(97.9% 0.021 166.113);
+  --color-card-foreground: oklch(26.2% 0.051 172.552);
+  --color-popover: oklch(97.9% 0.021 166.113);
+  --color-popover-foreground: oklch(26.2% 0.051 172.552);
+  --color-primary: oklch(50.8% 0.118 165.612);
+  --color-primary-foreground: oklch(97.9% 0.021 166.113);
+  --color-secondary: oklch(95% 0.052 163.051);
+  --color-secondary-foreground: oklch(37.8% 0.077 168.94);
+  --color-muted: oklch(95% 0.052 163.051);
+  --color-muted-foreground: oklch(0.50 0.04 163.225);
+  --color-accent: oklch(95% 0.052 163.051);
+  --color-accent-foreground: oklch(37.8% 0.077 168.94);
+  --color-destructive: oklch(50.5% 0.213 27.518);
+  --color-destructive-foreground: oklch(97.1% 0.013 17.38);
+  --color-border: oklch(90.5% 0.093 164.15);
+  --color-input: oklch(90.5% 0.093 164.15);
+  --color-ring: oklch(76.5% 0.177 163.223);
+}
+.dark[data-theme="emerald"] {
+  --color-background: oklch(26.2% 0.051 172.552);
+  --color-foreground: oklch(97.9% 0.021 166.113);
+  --color-card: oklch(37.8% 0.077 168.94);
+  --color-card-foreground: oklch(97.9% 0.021 166.113);
+  --color-popover: oklch(37.8% 0.077 168.94);
+  --color-popover-foreground: oklch(97.9% 0.021 166.113);
+  --color-primary: oklch(59.6% 0.145 163.225);
+  --color-primary-foreground: oklch(97.9% 0.021 166.113);
+  --color-secondary: oklch(43.2% 0.095 166.913);
+  --color-secondary-foreground: oklch(95% 0.052 163.051);
+  --color-muted: oklch(43.2% 0.095 166.913);
+  --color-muted-foreground: oklch(76.5% 0.177 163.223);
+  --color-accent: oklch(43.2% 0.095 166.913);
+  --color-accent-foreground: oklch(95% 0.052 163.051);
+  --color-destructive: oklch(63.7% 0.237 25.331);
+  --color-destructive-foreground: oklch(97.1% 0.013 17.38);
+  --color-border: oklch(43.2% 0.095 166.913);
+  --color-input: oklch(43.2% 0.095 166.913);
+  --color-ring: oklch(69.6% 0.17 162.48);
+}
+
+/* --- orange --- */
+[data-theme="orange"] {
+  --color-background: oklch(98% 0.016 73.684);
+  --color-foreground: oklch(26.6% 0.079 36.259);
+  --color-card: oklch(98% 0.016 73.684);
+  --color-card-foreground: oklch(26.6% 0.079 36.259);
+  --color-popover: oklch(98% 0.016 73.684);
+  --color-popover-foreground: oklch(26.6% 0.079 36.259);
+  --color-primary: oklch(55.3% 0.195 38.402);
+  --color-primary-foreground: oklch(98% 0.016 73.684);
+  --color-secondary: oklch(95.4% 0.038 75.164);
+  --color-secondary-foreground: oklch(40.8% 0.123 38.172);
+  --color-muted: oklch(95.4% 0.038 75.164);
+  --color-muted-foreground: oklch(0.52 0.04 41.116);
+  --color-accent: oklch(95.4% 0.038 75.164);
+  --color-accent-foreground: oklch(40.8% 0.123 38.172);
+  --color-destructive: oklch(50.5% 0.213 27.518);
+  --color-destructive-foreground: oklch(97.1% 0.013 17.38);
+  --color-border: oklch(90.1% 0.076 70.697);
+  --color-input: oklch(90.1% 0.076 70.697);
+  --color-ring: oklch(75% 0.183 55.934);
+}
+.dark[data-theme="orange"] {
+  --color-background: oklch(26.6% 0.079 36.259);
+  --color-foreground: oklch(98% 0.016 73.684);
+  --color-card: oklch(40.8% 0.123 38.172);
+  --color-card-foreground: oklch(98% 0.016 73.684);
+  --color-popover: oklch(40.8% 0.123 38.172);
+  --color-popover-foreground: oklch(98% 0.016 73.684);
+  --color-primary: oklch(64.6% 0.222 41.116);
+  --color-primary-foreground: oklch(98% 0.016 73.684);
+  --color-secondary: oklch(47% 0.157 37.304);
+  --color-secondary-foreground: oklch(95.4% 0.038 75.164);
+  --color-muted: oklch(47% 0.157 37.304);
+  --color-muted-foreground: oklch(75% 0.183 55.934);
+  --color-accent: oklch(47% 0.157 37.304);
+  --color-accent-foreground: oklch(95.4% 0.038 75.164);
+  --color-destructive: oklch(63.7% 0.237 25.331);
+  --color-destructive-foreground: oklch(97.1% 0.013 17.38);
+  --color-border: oklch(47% 0.157 37.304);
+  --color-input: oklch(47% 0.157 37.304);
+  --color-ring: oklch(70.5% 0.213 47.604);
+}
+
+/* --- rose --- */
+[data-theme="rose"] {
+  --color-background: oklch(96.9% 0.015 12.422);
+  --color-foreground: oklch(27.1% 0.105 12.094);
+  --color-card: oklch(96.9% 0.015 12.422);
+  --color-card-foreground: oklch(27.1% 0.105 12.094);
+  --color-popover: oklch(96.9% 0.015 12.422);
+  --color-popover-foreground: oklch(27.1% 0.105 12.094);
+  --color-primary: oklch(51.4% 0.222 16.935);
+  --color-primary-foreground: oklch(96.9% 0.015 12.422);
+  --color-secondary: oklch(94.1% 0.03 12.58);
+  --color-secondary-foreground: oklch(41% 0.159 10.272);
+  --color-muted: oklch(94.1% 0.03 12.58);
+  --color-muted-foreground: oklch(0.50 0.04 22.865);
+  --color-accent: oklch(94.1% 0.03 12.58);
+  --color-accent-foreground: oklch(41% 0.159 10.272);
+  --color-destructive: oklch(50.5% 0.213 27.518);
+  --color-destructive-foreground: oklch(97.1% 0.013 17.38);
+  --color-border: oklch(89.2% 0.058 10.001);
+  --color-input: oklch(89.2% 0.058 10.001);
+  --color-ring: oklch(71.2% 0.194 13.428);
+}
+.dark[data-theme="rose"] {
+  --color-background: oklch(27.1% 0.105 12.094);
+  --color-foreground: oklch(96.9% 0.015 12.422);
+  --color-card: oklch(41% 0.159 10.272);
+  --color-card-foreground: oklch(96.9% 0.015 12.422);
+  --color-popover: oklch(41% 0.159 10.272);
+  --color-popover-foreground: oklch(96.9% 0.015 12.422);
+  --color-primary: oklch(58.6% 0.253 17.585);
+  --color-primary-foreground: oklch(96.9% 0.015 12.422);
+  --color-secondary: oklch(45.5% 0.188 13.697);
+  --color-secondary-foreground: oklch(94.1% 0.03 12.58);
+  --color-muted: oklch(45.5% 0.188 13.697);
+  --color-muted-foreground: oklch(71.2% 0.194 13.428);
+  --color-accent: oklch(45.5% 0.188 13.697);
+  --color-accent-foreground: oklch(94.1% 0.03 12.58);
+  --color-destructive: oklch(63.7% 0.237 25.331);
+  --color-destructive-foreground: oklch(97.1% 0.013 17.38);
+  --color-border: oklch(45.5% 0.188 13.697);
+  --color-input: oklch(45.5% 0.188 13.697);
+  --color-ring: oklch(64.5% 0.246 16.439);
+}
+
+
+
+
+.dark
+
+.dark
+
+.dark
+
+
+
+
+/* --- yellow(shadcn 官方主题,oklch) --- */
+[data-theme="yellow"] {
+  --color-background: oklch(98.7% 0.026 102.212);
+  --color-foreground: oklch(28.6% 0.066 53.813);
+  --color-card: oklch(98.7% 0.026 102.212);
+  --color-card-foreground: oklch(28.6% 0.066 53.813);
+  --color-popover: oklch(98.7% 0.026 102.212);
+  --color-popover-foreground: oklch(28.6% 0.066 53.813);
+  --color-primary: oklch(55.4% 0.135 66.442);
+  --color-primary-foreground: oklch(98.7% 0.026 102.212);
+  --color-secondary: oklch(97.3% 0.071 103.193);
+  --color-secondary-foreground: oklch(42.1% 0.095 57.708);
+  --color-muted: oklch(97.3% 0.071 103.193);
+  --color-muted-foreground: oklch(0.551 0.05 102.2);
+  --color-accent: oklch(97.3% 0.071 103.193);
+  --color-accent-foreground: oklch(42.1% 0.095 57.708);
+  --color-destructive: oklch(50.5% 0.213 27.518);
+  --color-destructive-foreground: oklch(97.1% 0.013 17.38);
+  --color-border: oklch(94.5% 0.129 101.54);
+  --color-input: oklch(94.5% 0.129 101.54);
+  --color-ring: oklch(85.2% 0.199 91.936);
+}
+
+.dark[data-theme="yellow"] {
+  --color-background: oklch(28.6% 0.066 53.813);
+  --color-foreground: oklch(98.7% 0.026 102.212);
+  --color-card: oklch(42.1% 0.095 57.708);
+  --color-card-foreground: oklch(98.7% 0.026 102.212);
+  --color-popover: oklch(42.1% 0.095 57.708);
+  --color-popover-foreground: oklch(98.7% 0.026 102.212);
+  --color-primary: oklch(68.1% 0.162 75.834);
+  --color-primary-foreground: oklch(98.7% 0.026 102.212);
+  --color-secondary: oklch(47.6% 0.114 61.907);
+  --color-secondary-foreground: oklch(97.3% 0.071 103.193);
+  --color-muted: oklch(47.6% 0.114 61.907);
+  --color-muted-foreground: oklch(85.2% 0.199 91.936);
+  --color-accent: oklch(47.6% 0.114 61.907);
+  --color-accent-foreground: oklch(97.3% 0.071 103.193);
+  --color-destructive: oklch(63.7% 0.237 25.331);
+  --color-destructive-foreground: oklch(97.1% 0.013 17.38);
+  --color-border: oklch(47.6% 0.114 61.907);
+  --color-input: oklch(47.6% 0.114 61.907);
+  --color-ring: oklch(79.5% 0.184 86.047);
+}
+
+
+/* ---- 经典配色主题(每套 light/dark 成对,取自各自官方调色板) ---- */
+
+/* --- Solarized(Ethan Schoonover 官方色板) --- */
+[data-theme="solarized"] {
+  --color-background: #fdf6e3;
+  --color-foreground: #586e75;
+  --color-card: #fdf6e3;
+  --color-card-foreground: #586e75;
+  --color-popover: #eee8d5;
+  --color-popover-foreground: #586e75;
+  --color-primary: #268bd2;
+  --color-primary-foreground: #fdf6e3;
+  --color-secondary: #eee8d5;
+  --color-secondary-foreground: #586e75;
+  --color-muted: #eee8d5;
+  --color-muted-foreground: #93a1a1;
+  --color-accent: #eee8d5;
+  --color-accent-foreground: #586e75;
+  --color-destructive: #dc322f;
+  --color-destructive-foreground: #fdf6e3;
+  --color-border: #eee8d5;
+  --color-input: #eee8d5;
+  --color-ring: #268bd2;
+}
+.dark[data-theme="solarized"] {
+  --color-background: #002b36;
+  --color-foreground: #93a1a1;
+  --color-card: #073642;
+  --color-card-foreground: #93a1a1;
+  --color-popover: #073642;
+  --color-popover-foreground: #93a1a1;
+  --color-primary: #268bd2;
+  --color-primary-foreground: #002b36;
+  --color-secondary: #073642;
+  --color-secondary-foreground: #93a1a1;
+  --color-muted: #073642;
+  --color-muted-foreground: #657b83;
+  --color-accent: #0a4552;
+  --color-accent-foreground: #eee8d5;
+  --color-destructive: #dc322f;
+  --color-destructive-foreground: #fdf6e3;
+  --color-border: #0a4552;
+  --color-input: #0a4552;
+  --color-ring: #268bd2;
+}
+
+/* --- Catppuccin(Latte / Mocha 官方色板) --- */
+[data-theme="catppuccin"] {
+  --color-background: #eff1f5;
+  --color-foreground: #4c4f69;
+  --color-card: #eff1f5;
+  --color-card-foreground: #4c4f69;
+  --color-popover: #e6e9ef;
+  --color-popover-foreground: #4c4f69;
+  --color-primary: #1e66f5;
+  --color-primary-foreground: #eff1f5;
+  --color-secondary: #e6e9ef;
+  --color-secondary-foreground: #4c4f69;
+  --color-muted: #e6e9ef;
+  --color-muted-foreground: #5b5f78;
+  --color-accent: #dce0e8;
+  --color-accent-foreground: #4c4f69;
+  --color-destructive: #d20f39;
+  --color-destructive-foreground: #eff1f5;
+  --color-border: #ccd0da;
+  --color-input: #ccd0da;
+  --color-ring: #7287fd;
+}
+.dark[data-theme="catppuccin"] {
+  --color-background: #1e1e2e;
+  --color-foreground: #cdd6f4;
+  --color-card: #181825;
+  --color-card-foreground: #cdd6f4;
+  --color-popover: #181825;
+  --color-popover-foreground: #cdd6f4;
+  --color-primary: #89b4fa;
+  --color-primary-foreground: #1e1e2e;
+  --color-secondary: #313244;
+  --color-secondary-foreground: #cdd6f4;
+  --color-muted: #313244;
+  --color-muted-foreground: #a6adc8;
+  --color-accent: #313244;
+  --color-accent-foreground: #cdd6f4;
+  --color-destructive: #f38ba8;
+  --color-destructive-foreground: #1e1e2e;
+  --color-border: #313244;
+  --color-input: #313244;
+  --color-ring: #b4befe;
+}
+
+/* --- Nord(Polar Night / Snow Storm 官方色板) --- */
+[data-theme="nord"] {
+  --color-background: #eceff4;
+  --color-foreground: #2e3440;
+  --color-card: #eceff4;
+  --color-card-foreground: #2e3440;
+  --color-popover: #e5e9f0;
+  --color-popover-foreground: #2e3440;
+  --color-primary: #5e81ac;
+  --color-primary-foreground: #eceff4;
+  --color-secondary: #e5e9f0;
+  --color-secondary-foreground: #2e3440;
+  --color-muted: #e5e9f0;
+  --color-muted-foreground: #4c566a;
+  --color-accent: #d8dee9;
+  --color-accent-foreground: #2e3440;
+  --color-destructive: #bf616a;
+  --color-destructive-foreground: #eceff4;
+  --color-border: #d8dee9;
+  --color-input: #d8dee9;
+  --color-ring: #88c0d0;
+}
+.dark[data-theme="nord"] {
+  --color-background: #2e3440;
+  --color-foreground: #d8dee9;
+  --color-card: #3b4252;
+  --color-card-foreground: #d8dee9;
+  --color-popover: #3b4252;
+  --color-popover-foreground: #d8dee9;
+  --color-primary: #88c0d0;
+  --color-primary-foreground: #2e3440;
+  --color-secondary: #3b4252;
+  --color-secondary-foreground: #d8dee9;
+  --color-muted: #3b4252;
+  --color-muted-foreground: #9aa5b7;
+  --color-accent: #434c5e;
+  --color-accent-foreground: #e5e9f0;
+  --color-destructive: #bf616a;
+  --color-destructive-foreground: #eceff4;
+  --color-border: #434c5e;
+  --color-input: #434c5e;
+  --color-ring: #88c0d0;
+}
+
+/* --- Rosé Pine(Rosé Pine / Rosé Pine Moon 官方色板) --- */
+[data-theme="rosepine"] {
+  --color-background: #faf4ed;
+  --color-foreground: #575279;
+  --color-card: #faf4ed;
+  --color-card-foreground: #575279;
+  --color-popover: #fffaf3;
+  --color-popover-foreground: #575279;
+  --color-primary: #907aa9;
+  --color-primary-foreground: #faf4ed;
+  --color-secondary: #f2e9e1;
+  --color-secondary-foreground: #575279;
+  --color-muted: #f2e9e1;
+  --color-muted-foreground: #797c8c;
+  --color-accent: #dfdad9;
+  --color-accent-foreground: #575279;
+  --color-destructive: #b4637a;
+  --color-destructive-foreground: #faf4ed;
+  --color-border: #dfdad9;
+  --color-input: #dfdad9;
+  --color-ring: #907aa9;
+}
+.dark[data-theme="rosepine"] {
+  --color-background: #232136;
+  --color-foreground: #e0def4;
+  --color-card: #2a273f;
+  --color-card-foreground: #e0def4;
+  --color-popover: #2a273f;
+  --color-popover-foreground: #e0def4;
+  --color-primary: #c4a7e7;
+  --color-primary-foreground: #232136;
+  --color-secondary: #393552;
+  --color-secondary-foreground: #e0def4;
+  --color-muted: #393552;
+  --color-muted-foreground: #908caa;
+  --color-accent: #393552;
+  --color-accent-foreground: #e0def4;
+  --color-destructive: #eb6f92;
+  --color-destructive-foreground: #232136;
+  --color-border: #393552;
+  --color-input: #393552;
+  --color-ring: #c4a7e7;
+}
+
+/* --- Gruvbox(Gruvbox Light / Dark 官方色板) --- */
+[data-theme="gruvbox"] {
+  --color-background: #fbf1c7;
+  --color-foreground: #3c3836;
+  --color-card: #fbf1c7;
+  --color-card-foreground: #3c3836;
+  --color-popover: #ebdbb2;
+  --color-popover-foreground: #3c3836;
+  --color-primary: #076678;
+  --color-primary-foreground: #fbf1c7;
+  --color-secondary: #ebdbb2;
+  --color-secondary-foreground: #3c3836;
+  --color-muted: #ebdbb2;
+  --color-muted-foreground: #7c6f64;
+  --color-accent: #d5c4a1;
+  --color-accent-foreground: #3c3836;
+  --color-destructive: #9d0006;
+  --color-destructive-foreground: #fbf1c7;
+  --color-border: #d5c4a1;
+  --color-input: #d5c4a1;
+  --color-ring: #076678;
+}
+.dark[data-theme="gruvbox"] {
+  --color-background: #282828;
+  --color-foreground: #ebdbb2;
+  --color-card: #3c3836;
+  --color-card-foreground: #ebdbb2;
+  --color-popover: #3c3836;
+  --color-popover-foreground: #ebdbb2;
+  --color-primary: #83a598;
+  --color-primary-foreground: #282828;
+  --color-secondary: #3c3836;
+  --color-secondary-foreground: #ebdbb2;
+  --color-muted: #3c3836;
+  --color-muted-foreground: #a89984;
+  --color-accent: #504945;
+  --color-accent-foreground: #ebdbb2;
+  --color-destructive: #fb4934;
+  --color-destructive-foreground: #282828;
+  --color-border: #504945;
+  --color-input: #504945;
+  --color-ring: #83a598;
+}
+
+/* --- Tokyo Night(Tokyo Night Day / Night 官方色板) --- */
+.dark
+
+/* ---- VS Code 主题(取自本机已安装主题插件的官方配色;无官方 Light 的按同 hue 推导浅色) ---- */
+
+
+.dark
+/* --- moegi --- */
+[data-theme="moegi"] {
+  --color-background: oklch(0.984 0.003 247.858);
+  --color-foreground: oklch(0.208 0.008 265.539);
+  --color-card: oklch(0.984 0.003 247.858);
+  --color-card-foreground: oklch(0.208 0.008 265.539);
+  --color-popover: oklch(0.984 0.003 247.858);
+  --color-popover-foreground: oklch(0.208 0.008 265.539);
+  --color-primary: oklch(0.527 0.096 161.296);
+  --color-primary-foreground: oklch(0.984 0.003 247.858);
+  --color-secondary: oklch(0.968 0.007 247.896);
+  --color-secondary-foreground: oklch(0.269 0.009 261);
+  --color-muted: oklch(0.968 0.007 247.896);
+  --color-muted-foreground: oklch(0.552 0.016 285.938);
+  --color-accent: oklch(0.968 0.007 247.896);
+  --color-accent-foreground: oklch(0.269 0.009 261);
+  --color-destructive: oklch(0.637 0.208 25.331);
+  --color-destructive-foreground: oklch(0.984 0.003 247.858);
+  --color-border: oklch(0.922 0.006 264.531);
+  --color-input: oklch(0.922 0.006 264.531);
+  --color-ring: oklch(0.704 0.096 161.296);
+}
+
+.dark[data-theme="moegi"] {
+  --color-background: oklch(0.153 0.006 261);
+  --color-foreground: oklch(0.984 0.003 247.858);
+  --color-card: oklch(0.208 0.008 265.539);
+  --color-card-foreground: oklch(0.984 0.003 247.858);
+  --color-popover: oklch(0.208 0.008 265.539);
+  --color-popover-foreground: oklch(0.984 0.003 247.858);
+  --color-primary: oklch(0.627 0.096 161.296);
+  --color-primary-foreground: oklch(0.153 0.006 261);
+  --color-secondary: oklch(0.269 0.009 261);
+  --color-secondary-foreground: oklch(0.968 0.007 247.896);
+  --color-muted: oklch(0.269 0.009 261);
+  --color-muted-foreground: oklch(0.704 0.01 261);
+  --color-accent: oklch(0.269 0.009 261);
+  --color-accent-foreground: oklch(0.968 0.007 247.896);
+  --color-destructive: oklch(0.637 0.208 25.331);
+  --color-destructive-foreground: oklch(0.984 0.003 247.858);
+  --color-border: oklch(0.309 0.01 261);
+  --color-input: oklch(0.309 0.01 261);
+  --color-ring: oklch(0.627 0.096 161.296);
+}
+
+/* --- dracula --- */
+[data-theme="dracula"] {
+  --color-background: #f6f7f9;
+  --color-foreground: #2f3241;
+  --color-card: #edeef3;
+  --color-card-foreground: #2f3241;
+  --color-popover: #edeef3;
+  --color-popover-foreground: #2f3241;
+  --color-primary: #ca2182;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #edeef3;
+  --color-secondary-foreground: #2f3241;
+  --color-muted: #edeef3;
+  --color-muted-foreground: #65687b;
+  --color-accent: #edeef3;
+  --color-accent-foreground: #2f3241;
+  --color-destructive: #808080;
+  --color-destructive-foreground: #ffffff;
+  --color-border: #d8dae4;
+  --color-input: #d8dae4;
+  --color-ring: #ca2182;
+}
+
+.dark[data-theme="dracula"] {
+  --color-background: #282a36;
+  --color-foreground: #f8f8f2;
+  --color-card: #21222c;
+  --color-card-foreground: #f8f8f2;
+  --color-popover: #21222c;
+  --color-popover-foreground: #f8f8f2;
+  --color-primary: #ff79c6;
+  --color-primary-foreground: #f8f8f2;
+  --color-secondary: #21222c;
+  --color-secondary-foreground: #f8f8f2;
+  --color-muted: #21222c;
+  --color-muted-foreground: #9aa5d8;
+  --color-accent: #21222c;
+  --color-accent-foreground: #f8f8f2;
+  --color-destructive: #ff5555;
+  --color-destructive-foreground: #ffffff;
+  --color-border: #44475a;
+  --color-input: #bd93f9;
+  --color-ring: #6272a4;
+}
+
+
+.dark
+
+
+
+.dark
+
+
+
+.dark
+
+/* 水平分栏拖拽手柄(上下分栏中间的横线),标准 CSS 选择器最可靠 */
+[data-slot="resizable-handle"][aria-orientation="horizontal"] {
+  height: 6px;
+  width: 100%;
+  cursor: row-resize;
+}
+[data-slot="resizable-handle"][aria-orientation="horizontal"]::after {
+  height: 12px;
+  width: 100%;
+  transform: translateY(-50%);
+  cursor: row-resize;
+}
+
+@layer base {
+  /* 让原生控件(滚动条/复选框)跟随深浅模式,避免深色下出现白色滚动条 */
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  * {
+    border-color: var(--color-border);
+  }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+  }
+  /* 滚动条跟随主题(深色下避免白色横条) */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 5px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-muted-foreground);
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  html {
+    scrollbar-color: var(--color-border) transparent;
+  }
+}

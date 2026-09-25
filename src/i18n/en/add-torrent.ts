@@ -1,0 +1,33 @@
+// Add-torrent dialog — links, local files, per-torrent options, result toasts.
+import type { Dictionary } from "@/i18n/types";
+
+export default {
+  "Add Torrent": "New Download Task",
+  "Add from URL": "Add from URL",
+  "Add from Magnet": "Add from Magnet",
+  "Add from File": "Add from File",
+  Links: "Links",
+  "Magnet, URL or infohash — one per line": "Magnet, URL or infohash — one per line",
+  "Links (magnet / URL / infohash, one per line)": "Links (magnet / URL / infohash, one per line)",
+  "Torrent files": "Torrent files",
+  "Click to choose or drop .torrent files": "Click to choose or drop .torrent files",
+  "Choose or drop .torrent files": "Choose or drop .torrent files",
+  "files selected": "files selected",
+  "Only .torrent files are supported": "Only .torrent files are supported",
+  "Select files to download": "Select files to download",
+  "Toggle all": "Toggle all",
+  "(multiple select supported)": "(multiple select supported)",
+  "Download Directory": "Download Directory",
+  "Create subfolder": "Create subfolder",
+  "Skip hash check": "Skip hash check",
+  "Do not start download automatically": "Do not start download automatically",
+  "Original name": "Original name",
+  Cookie: "Cookie",
+  "Download Limit": "Download Limit",
+  "Upload Limit": "Upload Limit",
+  "Share Ratio Limit": "Share Ratio Limit",
+  "Seeding Time Limit": "Seeding Time Limit",
+  "Torrent already exists": "Torrent already exists",
+  "Added successfully": "Added successfully",
+  "Torrent added": "Torrent added",
+} satisfies Dictionary;

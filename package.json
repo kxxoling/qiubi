@@ -1,0 +1,96 @@
+{
+  "name": "qiubi",
+  "version": "0.1.0",
+  "description": "A modern qBittorrent Web UI — web app + Plasmo browser extension",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:watch": "vitest",
+    "lint": "biome check src/",
+    "lint:fix": "biome check --write src/",
+    "typecheck": "tsc -b",
+    "prepare": "husky",
+    "build:demo": "vite build --mode demo --base=./ --outDir dist-demo && rm -rf dist-demo/rss-test",
+    "preview:demo": "vite preview --outDir dist-demo",
+    "ext:dev": "npm run ext:css && plasmo dev --target chrome-mv3",
+    "ext:build": "npm run ext:app && plasmo build --target chrome-mv3 && node scripts/ext-post.mjs",
+    "ext:app": "vite build --base ./ --outDir .ext-app",
+    "ext:watch": "vite build --base ./ --outDir .ext-app --watch"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.14",
+    "@faker-js/faker": "^10.6.0",
+    "@mswjs/data": "^0.16.2",
+    "@playwright/test": "^1.63.0",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@testing-library/jest-dom": "^6.10.0",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.7",
+    "@types/chrome": "^0.3.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "autoprefixer": "^10.6.1",
+    "husky": "^9.1.7",
+    "jsdom": "^29.1.1",
+    "msw": "^2.15.0",
+    "plasmo": "^0.90.5",
+    "postcss": "^8.5.28",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.0",
+    "vitest": "^4.1.11"
+  },
+  "dependencies": {
+    "@base-ui/react": "^1.8.0",
+    "@ctrl/torrent-file": "^4.5.1",
+    "@fontsource-variable/geist": "^5.3.0",
+    "@hookform/resolvers": "^5.9.1",
+    "@noble/hashes": "^2.4.0",
+    "@tanstack/react-hotkeys": "^0.10.0",
+    "@tanstack/react-query": "^5.103.1",
+    "@tanstack/react-router": "^1.170.38",
+    "@tanstack/react-table": "^8.21.3",
+    "@tanstack/react-virtual": "^3.14.13",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "cmdk": "^1.1.1",
+    "cn": "^0.3.0",
+    "i18next": "^26.4.2",
+    "lucide-react": "^1.47.0",
+    "react": "^19.3.0",
+    "react-aria": "^3.52.1",
+    "react-dom": "^19.3.0",
+    "react-hook-form": "^7.88.0",
+    "react-i18next": "^17.0.14",
+    "react-is": "^19.3.0",
+    "react-resizable-panels": "^4.12.4",
+    "recharts": "^3.10.1",
+    "shadcn": "^4.21.0",
+    "sonner": "^2.0.8",
+    "tailwind-merge": "^3.7.0",
+    "tw-animate-css": "^1.4.0",
+    "zod": "^4.6.5",
+    "zustand": "^5.0.15"
+  },
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
+  },
+  "manifest": {
+    "name": "qiubi",
+    "host_permissions": [
+      "<all_urls>"
+    ],
+    "permissions": [
+      "storage"
+    ]
+  }
+}

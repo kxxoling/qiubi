@@ -1,0 +1,33 @@
+// Add-torrent dialog — links, local files, per-torrent options, result toasts.
+import type { Dictionary } from "@/i18n/types";
+
+export default {
+  "Add Torrent": "Novo download",
+  "Add from URL": "Adicionar de URL",
+  "Add from Magnet": "Adicionar de magnet",
+  "Add from File": "Adicionar de arquivo",
+  Links: "Links",
+  "Magnet, URL or infohash — one per line": "Magnet, URL ou infohash — um por linha",
+  "Links (magnet / URL / infohash, one per line)": "Links (magnet / URL / infohash, um por linha)",
+  "Torrent files": "Arquivos torrent",
+  "Click to choose or drop .torrent files": "Clique para escolher ou arraste arquivos .torrent",
+  "Choose or drop .torrent files": "Escolha ou arraste arquivos .torrent",
+  "files selected": "arquivos selecionados",
+  "Only .torrent files are supported": "Apenas arquivos .torrent são suportados",
+  "Select files to download": "Selecione os arquivos a baixar",
+  "Toggle all": "Alternar todos",
+  "(multiple select supported)": "(seleção múltipla suportada)",
+  "Download Directory": "Pasta de downloads",
+  "Create subfolder": "Criar subpasta",
+  "Skip hash check": "Pular verificação de hash",
+  "Do not start download automatically": "Não iniciar o download automaticamente",
+  "Original name": "Nome original",
+  Cookie: "Cookie",
+  "Download Limit": "Limite de download",
+  "Upload Limit": "Limite de envio",
+  "Share Ratio Limit": "Limite de proporção",
+  "Seeding Time Limit": "Limite de tempo de semeadura",
+  "Torrent already exists": "O torrent já existe",
+  "Added successfully": "Adicionado com sucesso",
+  "Torrent added": "Torrent adicionado",
+} satisfies Dictionary;
