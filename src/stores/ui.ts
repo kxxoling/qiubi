@@ -1,3 +1,4 @@
+import type { SortingState } from "@tanstack/react-table";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -12,6 +13,11 @@ type UiState = {
   columnVisibility: Record<string, boolean>;
   /** Torrent table column order (header drag reordering), persisted */
   columnOrder: string[];
+  /** Torrent list sorting (header click), persisted across reloads */
+  torrentSorting: SortingState;
+  /** Last status filter chosen in the toolbar; a fresh open without ?status=
+   *  in the URL seeds the filter from it (explicit URLs always win) */
+  lastTorrentStatus: string;
   /** Whether the detail panel at the bottom of the torrent list is expanded
    *  (like qBT, shown after clicking a row) */
   detailPanelOpen: boolean;
@@ -23,6 +29,8 @@ type UiState = {
   setColumnSizing: (sizing: Record<string, number>) => void;
   setColumnVisibility: (v: Record<string, boolean>) => void;
   setColumnOrder: (order: string[]) => void;
+  setTorrentSorting: (updater: SortingState | ((prev: SortingState) => SortingState)) => void;
+  setLastTorrentStatus: (status: string) => void;
   setDetailPanelOpen: (open: boolean) => void;
   setDetailHash: (hash: string | null) => void;
 };
@@ -35,6 +43,8 @@ export const useUiStore = create<UiState>()(
       columnSizing: {},
       columnVisibility: {},
       columnOrder: [],
+      torrentSorting: [],
+      lastTorrentStatus: "all",
       detailPanelOpen: false,
       detailHash: null,
       toggleSidebar: () => set((s) => ({ sidebarVisible: !s.sidebarVisible })),
@@ -42,12 +52,18 @@ export const useUiStore = create<UiState>()(
       setColumnSizing: (columnSizing) => set({ columnSizing }),
       setColumnVisibility: (columnVisibility) => set({ columnVisibility }),
       setColumnOrder: (columnOrder) => set({ columnOrder }),
+      setTorrentSorting: (updater) =>
+        set((s) => ({
+          torrentSorting: typeof updater === "function" ? updater(s.torrentSorting) : updater,
+        })),
+      setLastTorrentStatus: (lastTorrentStatus) => set({ lastTorrentStatus }),
       setDetailPanelOpen: (detailPanelOpen) => set({ detailPanelOpen }),
       setDetailHash: (detailHash) => set({ detailHash }),
     }),
-    // Filters are not persisted; view toggles, column widths/order and the
-    // detail-panel toggle are; detailHash is not persisted (the torrent may
-    // already be deleted — the panel handles that fallback itself)
+    // View toggles, column widths/order, list sorting, the last status filter
+    // and the detail-panel toggle are persisted; the other URL-driven filters
+    // (search/category/tag/tracker) and detailHash are not — detailHash's
+    // torrent may already be deleted (the panel handles that fallback itself)
     {
       name: "qiubi-ui",
       partialize: (s) => ({
@@ -56,6 +72,8 @@ export const useUiStore = create<UiState>()(
         columnSizing: s.columnSizing,
         columnVisibility: s.columnVisibility,
         columnOrder: s.columnOrder,
+        torrentSorting: s.torrentSorting,
+        lastTorrentStatus: s.lastTorrentStatus,
         detailPanelOpen: s.detailPanelOpen,
       }),
     },
