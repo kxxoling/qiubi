@@ -231,6 +231,26 @@ export function TorrentList() {
   const selectedRows = table.getFilteredSelectedRowModel().rows;
   const selectedHashes = selectedRows.map((r) => r.original.hash);
 
+  // The row click that opens the detail panel also selects the row; when that
+  // torrent is later deselected (ctrl-click toggle, marquee over empty space,
+  // plain click on blank), close the panel instead of stranding it open on an
+  // unselected torrent. Only the selected→deselected transition closes: the
+  // command palette ("@search") opens the panel without selecting anything,
+  // so its torrent was never in the selection and the panel stays.
+  const panelTorrentWasSelectedRef = useRef(false);
+  useEffect(() => {
+    if (!detailHash) {
+      panelTorrentWasSelectedRef.current = false;
+      return;
+    }
+    const isSelected = selectedHashes.includes(detailHash);
+    if (panelTorrentWasSelectedRef.current && !isSelected && detailPanelOpen) {
+      setDetailHash(null);
+      setDetailPanelOpen(false);
+    }
+    panelTorrentWasSelectedRef.current = isSelected;
+  }, [detailHash, detailPanelOpen, selectedHashes, setDetailHash, setDetailPanelOpen]);
+
   const { containerRef, marquee, handleRowClick, handlePointerDown, handleRowContextMenu } =
     useTorrentSelection(table, rows);
 
