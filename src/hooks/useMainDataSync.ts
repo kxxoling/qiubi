@@ -95,6 +95,12 @@ export function useMainDataSync(intervalMs = 2000) {
       return { rid: res.rid, torrents, categories, tags, trackers, serverState };
     },
     refetchInterval: pollWithBackoff(intervalMs),
+    // Keep polling while the tab is hidden (TanStack pauses interval refetches
+    // on blur by default): the header speed and the tab-title speed would
+    // otherwise freeze in a background tab. Chrome still throttles hidden-tab
+    // timers (1s granularity, 1/min after ~5 min) — same as the official
+    // WebUI, which also polls from a plain timer.
+    refetchIntervalInBackground: true,
     staleTime: intervalMs / 2,
   });
 }
