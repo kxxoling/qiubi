@@ -37,7 +37,8 @@ jobs:
 
       - name: Build demo bundle
         # Relative base: works when served from any subpath (e.g. GitHub Pages /<repo>/)
-        run: bunx tsc -b && bun run build:demo
+        # (typecheck runs in CI on the same push; no need to repeat it here)
+        run: bun run build:demo
 
       - uses: actions/upload-pages-artifact@v3
         with:
