@@ -25,11 +25,12 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # Prefer the dispatch input when present: on workflow_dispatch,
+      # GITHUB_REF_NAME is the BRANCH the run was started from ("main"), not a
+      # tag — the old "${GITHUB_REF_NAME:-inputs.tag}" always picked the branch
       - name: Determine tag name
         id: tag
-        run: |
-          TAG="${GITHUB_REF_NAME:-${{ inputs.tag }}}"
-          echo "name=$TAG" >> "$GITHUB_OUTPUT"
+        run: echo "name=${{ inputs.tag || github.ref_name }}" >> "$GITHUB_OUTPUT"
 
       - uses: oven-sh/setup-bun@v2
 
@@ -95,7 +96,8 @@ jobs:
       - name: Determine tag name
         id: tag
         run: |
-          TAG="${GITHUB_REF_NAME:-${{ inputs.tag }}}"
+          # Same dispatch-input preference as the build job
+          TAG="${{ inputs.tag || github.ref_name }}"
           # Strip 'v' prefix for Docker tags (v0.1.0 → 0.1.0)
           VERSION="${TAG#v}"
           echo "name=$TAG" >> "$GITHUB_OUTPUT"
