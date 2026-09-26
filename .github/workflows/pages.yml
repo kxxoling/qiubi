@@ -30,21 +30,17 @@ jobs:
       - uses: actions/checkout@v7
 
       - uses: oven-sh/setup-bun@v2
-
-      - name: Cache bun
-        uses: actions/cache@v6
         with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
-          restore-keys: ${{ runner.os }}-bun-
+          cache: true
 
       - run: bun install --frozen-lockfile
 
       - name: Build demo bundle
         # Relative base: works when served from any subpath (e.g. GitHub Pages /<repo>/)
-        run: bunx tsc -b && bun run build:demo
+        # (typecheck runs in CI on the same push; no need to repeat it here)
+        run: bun run build:demo
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: dist-demo
 
@@ -58,4 +54,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
