@@ -34,8 +34,6 @@ jobs:
         run: echo "name=${{ inputs.tag || github.ref_name }}" >> "$GITHUB_OUTPUT"
 
       - uses: oven-sh/setup-bun@v2
-        with:
-          cache: true
 
       - run: bun install --frozen-lockfile
 
