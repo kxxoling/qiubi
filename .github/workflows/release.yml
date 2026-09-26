@@ -33,13 +33,8 @@ jobs:
         run: echo "name=${{ inputs.tag || github.ref_name }}" >> "$GITHUB_OUTPUT"
 
       - uses: oven-sh/setup-bun@v2
-
-      - name: Cache bun
-        uses: actions/cache@v6
         with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
-          restore-keys: ${{ runner.os }}-bun-
+          cache: true
 
       - run: bun install --frozen-lockfile
 
