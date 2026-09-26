@@ -8,8 +8,6 @@ import { useTorrentList } from "@/hooks/useMainDataSync";
 import { formatBytes, formatSpeed } from "@/lib/utils.format";
 import { useSpeedHistory } from "@/stores/speedHistory";
 
-const SAMPLE_MS = 2000;
-
 /**
  * Dashboard — global speed stats + real-time speed chart
  *
@@ -22,7 +20,7 @@ export function Dashboard() {
   const history = useSpeedHistory((s) => s.points);
   const [rangeMin, setRangeMin] = useState(5);
 
-  const { torrents, serverState: transfer } = useTorrentList(SAMPLE_MS);
+  const { torrents, serverState: transfer } = useTorrentList();
 
   // Filter displayed data by time range
   const chartData = useMemo(() => {

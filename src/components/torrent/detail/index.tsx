@@ -31,7 +31,7 @@ export function TorrentDetailPanel({
   const { t } = useTranslation();
 
   // Basic info (speed/progress/ratio) comes from the shared maindata polling
-  const { torrents } = useTorrentList(2000);
+  const { torrents } = useTorrentList();
   const info = torrents?.find((tr) => tr.hash === hash);
 
   const { data: props } = useQuery({
@@ -57,7 +57,7 @@ export function TorrentDetailPanel({
     queryKey: ["torrent-peers", hash],
     queryFn: () => qbtClient.getSyncTorrentPeers(hash ?? "").then((d) => Object.values(d.peers)),
     enabled: !!hash,
-    refetchInterval: pollWithBackoff(2000),
+    refetchInterval: pollWithBackoff(1000),
   });
 
   const httpTrackers = trackers?.filter((tr) => tr.url.startsWith("http")) ?? [];

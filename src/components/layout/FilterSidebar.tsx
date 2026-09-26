@@ -98,7 +98,7 @@ function trackerCounts(
 export function FilterSidebar({ onSelect }: { onSelect?: () => void } = {}) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { data, torrents, categories, tags } = useTorrentList(2000);
+  const { data, torrents, categories, tags } = useTorrentList();
   const urlSearch = useSearch({ strict: false }) as {
     category?: string;
     tag?: string;
