@@ -5,9 +5,18 @@
  * Marquee selection is scoped INSIDE the scroll container: pointer presses on
  * sibling regions (toolbar, detail panel handle) can never leak into selection
  * because events do not bubble across sibling nodes.
+ *
+ * All rows stay mounted (no virtualization); rendering cost is kept in check
+ * by row-level memoization: a row only re-renders when ITS torrent object
+ * changed (the maindata merge preserves object identity for untouched
+ * torrents), its selection/focus state changed, or the column set / locale
+ * changed. Callbacks and list-level data (categories, tags, selectedHashes)
+ * are forwarded through a ref that is refreshed on every parent render, so
+ * the memo is neither defeated by inline closures nor served stale handlers.
  */
 import { flexRender, type Row, type Table } from "@tanstack/react-table";
 import type * as React from "react";
+import { memo, type RefObject, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
   type CtxAction,
@@ -61,6 +70,90 @@ export type TorrentTableProps = {
   onOpenDetail: (hash: string) => void;
 };
 
+/** Everything a row needs that changes at list level (not per row). Passed via
+ *  a ref refreshed on every parent render so the row memo can ignore it. */
+type StableRowDeps = {
+  selectedHashes: string[];
+  categories: { name: string; savePath: string }[] | undefined;
+  tags: string[] | undefined;
+  handleRowClick: (e: React.MouseEvent, idx: number) => boolean;
+  handleRowContextMenu: (
+    row: Row<TorrentInfo>,
+    idx: number,
+    setFocused: (i: number) => void,
+  ) => void;
+  setFocusedIndex: (i: number) => void;
+  onCtxAction: (action: CtxAction, hashes: string[], row?: TorrentInfo) => void;
+  onOpenDetail: (hash: string) => void;
+};
+
+type TorrentRowProps = {
+  row: Row<TorrentInfo>;
+  idx: number;
+  isSelected: boolean;
+  isFocused: boolean;
+  /** Visible column ids + locale; changes invalidate every row's cells */
+  columnSignature: string;
+  depsRef: RefObject<StableRowDeps>;
+};
+
+function TorrentRowImpl({
+  row,
+  idx,
+  isSelected,
+  isFocused,
+  columnSignature,
+  depsRef,
+}: TorrentRowProps) {
+  const deps = depsRef.current;
+  return (
+    <TorrentContextMenu
+      row={row}
+      ctxHashes={ctxHashesFor(row, deps.selectedHashes)}
+      categories={deps.categories}
+      tags={deps.tags}
+      onAction={deps.onCtxAction}
+      renderRow={
+        <TableRow
+          data-row-idx={idx}
+          className={`cursor-pointer transition-colors ${isSelected ? "bg-primary/10" : ""} ${
+            isFocused ? "ring-1 ring-primary/50 bg-primary/5" : ""
+          }`}
+          onClick={(e) => {
+            // false = click produced by a marquee release; skip select & panel
+            if (!deps.handleRowClick(e, idx)) return;
+            // Single click syncs the bottom detail panel (qBT behavior)
+            deps.onOpenDetail(row.original.hash);
+          }}
+          onContextMenu={() => deps.handleRowContextMenu(row, idx, deps.setFocusedIndex)}
+          onDoubleClick={() => deps.onOpenDetail(row.original.hash)}
+        />
+      }
+      cells={row
+        .getVisibleCells()
+        .map((cell) => (
+          <TableCell key={cell.id}>
+            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+          </TableCell>
+        ))}
+    />
+  );
+}
+
+/** Row memo: re-render only when this row's data/state actually changed. The
+ *  TanStack Row instance itself is rebuilt whenever the data reference changes
+ *  (every second with active torrents), so identity lives in row.original —
+ *  which the maindata merge keeps stable for untouched torrents. */
+const TorrentRow = memo(
+  TorrentRowImpl,
+  (a, b) =>
+    a.row.original === b.row.original &&
+    a.isSelected === b.isSelected &&
+    a.isFocused === b.isFocused &&
+    a.idx === b.idx &&
+    a.columnSignature === b.columnSignature,
+);
+
 export function TorrentTable({
   table,
   rows,
@@ -82,9 +175,26 @@ export function TorrentTable({
   onCtxAction,
   onOpenDetail,
 }: TorrentTableProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const setColumnSizing = useUiStore((s) => s.setColumnSizing);
   const columns = table.getAllLeafColumns();
+
+  const depsRef = useRef<StableRowDeps>(null as unknown as StableRowDeps);
+  depsRef.current = {
+    selectedHashes,
+    categories,
+    tags,
+    handleRowClick,
+    handleRowContextMenu,
+    setFocusedIndex,
+    onCtxAction,
+    onOpenDetail,
+  };
+
+  const columnSignature = `${i18n.language}:${table
+    .getVisibleLeafColumns()
+    .map((c) => c.id)
+    .join(",")}`;
 
   return (
     <div
@@ -213,36 +323,14 @@ export function TorrentTable({
           <TableBody>
             {rows.length ? (
               rows.map((row, idx) => (
-                <TorrentContextMenu
+                <TorrentRow
                   key={row.id}
                   row={row}
-                  ctxHashes={ctxHashesFor(row, selectedHashes)}
-                  categories={categories}
-                  tags={tags}
-                  onAction={onCtxAction}
-                  renderRow={
-                    <TableRow
-                      data-row-idx={idx}
-                      className={`cursor-pointer transition-colors ${
-                        row.getIsSelected() ? "bg-primary/10" : ""
-                      } ${focusedIndex === idx ? "ring-1 ring-primary/50 bg-primary/5" : ""}`}
-                      onClick={(e) => {
-                        // false = click produced by a marquee release; skip select & panel
-                        if (!handleRowClick(e, idx)) return;
-                        // Single click syncs the bottom detail panel (qBT behavior)
-                        onOpenDetail(row.original.hash);
-                      }}
-                      onContextMenu={() => handleRowContextMenu(row, idx, setFocusedIndex)}
-                      onDoubleClick={() => onOpenDetail(row.original.hash)}
-                    />
-                  }
-                  cells={row
-                    .getVisibleCells()
-                    .map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </TableCell>
-                    ))}
+                  idx={idx}
+                  isSelected={row.getIsSelected()}
+                  isFocused={focusedIndex === idx}
+                  columnSignature={columnSignature}
+                  depsRef={depsRef}
                 />
               ))
             ) : (
