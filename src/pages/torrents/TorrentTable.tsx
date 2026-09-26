@@ -257,10 +257,20 @@ export function TorrentTable({
                         />
                       }
                     >
-                      {h.isPlaceholder
-                        ? null
-                        : flexRender(h.column.columnDef.header, h.getContext())}
-                      {{ asc: " ↑", desc: " ↓" }[h.column.getIsSorted() as string] ?? ""}
+                      {h.isPlaceholder ? null : (
+                        // table-fixed shrinks cells below their content width
+                        // when columns are resized narrow; clip the title with
+                        // an ellipsis instead of letting it paint over the
+                        // neighboring header (the sort arrow never truncates)
+                        <div className="flex min-w-0 items-center">
+                          <span className="min-w-0 flex-1 truncate">
+                            {flexRender(h.column.columnDef.header, h.getContext())}
+                          </span>
+                          <span className="shrink-0">
+                            {{ asc: " ↑", desc: " ↓" }[h.column.getIsSorted() as string] ?? ""}
+                          </span>
+                        </div>
+                      )}
                       {/* Resize handle: drag or arrow keys to resize (qBT style),
                            double-click resets to default width */}
                       {h.column.getCanResize() && (
