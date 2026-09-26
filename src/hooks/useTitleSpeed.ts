@@ -7,7 +7,7 @@
  * avoid noise.
  */
 import { useEffect } from "react";
-import { useMainDataSync } from "@/hooks/useMainDataSync";
+import { MAINDATA_POLL_MS, useMainDataSync } from "@/hooks/useMainDataSync";
 import { formatSpeed } from "@/lib/utils.format";
 
 /** Strip a possibly existing speed prefix (from the arrow up to the base title
@@ -15,7 +15,8 @@ import { formatSpeed } from "@/lib/utils.format";
 const SPEED_PREFIX = /^(\[[^\]]*\]\s*|[↑↓].*(?=qiubi))/;
 
 export function useTitleSpeed() {
-  const { data } = useMainDataSync(2000);
+  // The single poll scheduler for the whole app (always mounted via AppLayout)
+  const { data } = useMainDataSync(MAINDATA_POLL_MS);
   const dl = data?.serverState?.dl_info_speed ?? 0;
   const up = data?.serverState?.up_info_speed ?? 0;
 

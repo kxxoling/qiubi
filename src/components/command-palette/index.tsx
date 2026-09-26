@@ -74,7 +74,7 @@ export function CommandPalette() {
     setDetailHash,
     setDetailPanelOpen,
   } = useUiStore();
-  const { torrents } = useTorrentList(4000);
+  const { torrents } = useTorrentList();
   // The first polling tick may not have returned yet; fall back to an empty array
   const torrentsList: TorrentInfo[] = torrents ?? [];
 

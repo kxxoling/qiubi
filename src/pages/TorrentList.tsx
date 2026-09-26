@@ -149,7 +149,7 @@ export function TorrentList() {
   });
 
   // Shared sync/maindata incremental polling
-  const { data: mainData, torrents, categories, tags, isLoading } = useTorrentList(2000);
+  const { data: mainData, torrents, categories, tags, isLoading } = useTorrentList();
 
   // Close the detail panel when its torrent is deleted (otherwise the panel
   // keeps polling a dead hash and spams 404s)

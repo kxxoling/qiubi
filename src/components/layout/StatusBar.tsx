@@ -20,7 +20,7 @@ export function StatusBar() {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
   const [chartOpen, setChartOpen] = useState(false);
-  const { data } = useMainDataSync(2000);
+  const { data } = useMainDataSync();
   const serverState = data?.serverState;
   const { altSpeed, toggleAltSpeed } = useAltSpeed();
 

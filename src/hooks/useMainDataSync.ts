@@ -22,7 +22,6 @@ import { useSpeedHistory } from "@/stores/speedHistory";
 import type { TorrentInfo, TransferInfo } from "@/types/qbt";
 
 export type MainDataState = {
-  rid: number;
   torrents: Record<string, TorrentInfo>;
   categories: Record<string, { name: string; savePath: string }>;
   tags: string[];
@@ -30,6 +29,13 @@ export type MainDataState = {
   trackers: Record<string, string[]>;
   serverState: Partial<TransferInfo> | null;
 };
+
+/** Latest sync response id. Module-level on purpose: the rid changes on EVERY
+ *  response, so keeping it inside the cached data would break TanStack's
+ *  structural sharing — data would get a new reference every second and all
+ *  consumers (table, sidebar, status bar…) would re-render even on polls
+ *  where nothing changed. */
+let currentRid = 0;
 
 export const MAINDATA_KEY = ["sync", "maindata"] as const;
 
@@ -42,13 +48,24 @@ export function pollWithBackoff<TData>(
   return (query) => (query.state.error != null ? slowMs : intervalMs);
 }
 
-export function useMainDataSync(intervalMs = 2000) {
+/** Canonical maindata poll cadence.
+ *
+ *  TanStack v5.103 runs one setInterval per OBSERVER: every consumer passing
+ *  an interval multiplies the fetch → merge → re-render rate (5 observers ×
+ *  200ms pegged the CPU at >100% with main-thread violations). Only the
+ *  always-mounted AppLayout observer (useTitleSpeed) schedules the poll;
+ *  every other consumer subscribes with no interval. 1s matches both the
+ *  server's ~1s speed-recompute granularity and the official WebUI rate. */
+export const MAINDATA_POLL_MS = 1000;
+
+export function useMainDataSync(intervalMs?: number) {
   const qc = useQueryClient();
   return useQuery({
     queryKey: MAINDATA_KEY,
     queryFn: async (): Promise<MainDataState> => {
       const prev = qc.getQueryData<MainDataState>(MAINDATA_KEY);
-      const res = await qbtClient.getSyncMainData(prev?.rid ?? 0);
+      const prevRid = currentRid;
+      const res = await qbtClient.getSyncMainData(prevRid);
 
       const base =
         res.full_update || !prev
@@ -92,21 +109,22 @@ export function useMainDataSync(intervalMs = 2000) {
           up: serverState.up_info_speed ?? 0,
         });
 
-      return { rid: res.rid, torrents, categories, tags, trackers, serverState };
+      currentRid = res.rid;
+      return { torrents, categories, tags, trackers, serverState };
     },
-    refetchInterval: pollWithBackoff(intervalMs),
+    refetchInterval: intervalMs === undefined ? false : pollWithBackoff(intervalMs),
     // Keep polling while the tab is hidden (TanStack pauses interval refetches
     // on blur by default): the header speed and the tab-title speed would
     // otherwise freeze in a background tab. Chrome still throttles hidden-tab
     // timers (1s granularity, 1/min after ~5 min) — same as the official
     // WebUI, which also polls from a plain timer.
     refetchIntervalInBackground: true,
-    staleTime: intervalMs / 2,
+    staleTime: (intervalMs ?? MAINDATA_POLL_MS) / 2,
   });
 }
 
 /** Convenience wrapper: get the torrent array directly (used by TorrentList / Dashboard) */
-export function useTorrentList(intervalMs = 2000) {
+export function useTorrentList(intervalMs?: number) {
   const query = useMainDataSync(intervalMs);
   const data = query.data;
 
