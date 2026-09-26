@@ -28,6 +28,11 @@ jobs:
 
       - run: bun run build
 
+      # The extension build (vite app + plasmo packaging + ext-post glue) is
+      # otherwise only exercised at release time; build it here so breakage
+      # surfaces in PRs, not in a tag build
+      - run: bun run ext:build
+
   e2e:
     runs-on: ubuntu-latest
     steps:
