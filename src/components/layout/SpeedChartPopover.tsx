@@ -73,6 +73,7 @@ export function SpeedChartContent({ className }: { className?: string }) {
       .map((p) => ({
         ...p,
         time: new Date(p.t).toLocaleTimeString(undefined, {
+          hour: "2-digit",
           minute: "2-digit",
           second: "2-digit",
         }),
