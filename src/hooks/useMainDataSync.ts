@@ -22,7 +22,6 @@ import { useSpeedHistory } from "@/stores/speedHistory";
 import type { TorrentInfo, TransferInfo } from "@/types/qbt";
 
 export type MainDataState = {
-  rid: number;
   torrents: Record<string, TorrentInfo>;
   categories: Record<string, { name: string; savePath: string }>;
   tags: string[];
@@ -30,6 +29,13 @@ export type MainDataState = {
   trackers: Record<string, string[]>;
   serverState: Partial<TransferInfo> | null;
 };
+
+/** Latest sync response id. Module-level on purpose: the rid changes on EVERY
+ *  response, so keeping it inside the cached data would break TanStack's
+ *  structural sharing — data would get a new reference every second and all
+ *  consumers (table, sidebar, status bar…) would re-render even on polls
+ *  where nothing changed. */
+let currentRid = 0;
 
 export const MAINDATA_KEY = ["sync", "maindata"] as const;
 
@@ -58,7 +64,8 @@ export function useMainDataSync(intervalMs?: number) {
     queryKey: MAINDATA_KEY,
     queryFn: async (): Promise<MainDataState> => {
       const prev = qc.getQueryData<MainDataState>(MAINDATA_KEY);
-      const res = await qbtClient.getSyncMainData(prev?.rid ?? 0);
+      const prevRid = currentRid;
+      const res = await qbtClient.getSyncMainData(prevRid);
 
       const base =
         res.full_update || !prev
@@ -102,7 +109,8 @@ export function useMainDataSync(intervalMs?: number) {
           up: serverState.up_info_speed ?? 0,
         });
 
-      return { rid: res.rid, torrents, categories, tags, trackers, serverState };
+      currentRid = res.rid;
+      return { torrents, categories, tags, trackers, serverState };
     },
     refetchInterval: intervalMs === undefined ? false : pollWithBackoff(intervalMs),
     // Keep polling while the tab is hidden (TanStack pauses interval refetches
