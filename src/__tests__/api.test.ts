@@ -85,5 +85,11 @@ describe("QbtClient", () => {
     fetchSpy.mockResolvedValue(new Response("Ok.", { status: 200 }));
     await client.logout();
     expect(client.isLoggedIn()).toBe(false);
+    // fetchSpy accumulates calls across tests (vi.spyOn re-wraps the same
+    // mock without restoring), so assert on the LAST call, not the first
+    const [url, options] = fetchSpy.mock.calls.at(-1);
+    expect(url).toBe("http://localhost:8080/api/v2/auth/logout");
+    // qBT only accepts POST; a GET 405s and never destroys the session
+    expect(options.method).toBe("POST");
   });
 });

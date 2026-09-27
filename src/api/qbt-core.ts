@@ -260,7 +260,8 @@ export class QbtCore {
   }
 
   async logout(): Promise<void> {
-    await this.request("/auth/logout");
+    // qBT only accepts POST here; a GET 405s and leaves the session alive
+    await this.request("/auth/logout", { method: "POST" });
     this.sid = null;
     this.isAuthenticated = false;
     this.isLocalAuthBypass = false;
