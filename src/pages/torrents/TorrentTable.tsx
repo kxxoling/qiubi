@@ -308,7 +308,7 @@ export function TorrentTable({
                         />
                       )}
                     </ContextMenuTrigger>
-                    <ContextMenuContent className="max-h-72 overflow-y-auto">
+                    <ContextMenuContent className="max-h-[min(36rem,calc(100dvh-8rem))] overflow-y-auto">
                       <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">
                         {t("Visible columns")}
                       </div>
