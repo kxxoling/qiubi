@@ -62,6 +62,9 @@ export function BasicFields({
   // plain React filtering (declarative <ComboboxItem> children don't go
   // through Base UI's filter hook); the create-new entry always stays listed
   const catQuery = categoryQuery.trim().toLowerCase();
+  /** Exact (trimmed) match against existing categories — hides the create row */
+  const categoryExists =
+    categoryQuery.trim() !== "" && (categories ?? []).some((c) => c.name === categoryQuery.trim());
   const visibleCategories: Category[] = (categories ?? []).filter(
     (c) => !catQuery || c.name.toLowerCase().includes(catQuery),
   );
@@ -222,24 +225,29 @@ export function BasicFields({
             />
             <ComboboxContent>
               <ComboboxList>
-                <ComboboxEmpty>
-                  {t("New Category")} “{categoryQuery}”
-                </ComboboxEmpty>
                 {/* empty value = leave the torrent uncategorized */}
                 <ComboboxItem value="">{t("Uncategorized")}</ComboboxItem>
                 {visibleCategories.map((c) => (
                   <ComboboxItem key={c.name} value={c.name}>
-                    {c.name}
+                    <span className="truncate">{c.name}</span>
                   </ComboboxItem>
                 ))}
-                <ComboboxSeparator />
-                {/* always available: type a name (any text) and pick this */}
-                <ComboboxItem value="__new__" className="text-primary">
-                  <Plus className="size-3.5" />
-                  {categoryQuery.trim()
-                    ? `${t("New Category")} “${categoryQuery.trim()}”`
-                    : t("New Category")}
-                </ComboboxItem>
+                {/* only when the typed value is NOT an existing category:
+                    creating a name that exists 419s on the backend (conflict),
+                    and the row is pointless when reopening an applied value */}
+                {!categoryExists && (
+                  <>
+                    <ComboboxSeparator />
+                    {/* type a name (any text) and pick this to create it. Static
+                        label only — a dynamic "new category X" label was wrong
+                        for existing names and overflowed in long-locale
+                        translations; the typed name rides the query */}
+                    <ComboboxItem value="__new__" className="min-w-0 text-primary">
+                      <Plus className="size-3.5 shrink-0" />
+                      <span className="truncate">{t("New Category")}</span>
+                    </ComboboxItem>
+                  </>
+                )}
               </ComboboxList>
             </ComboboxContent>
           </Combobox>
