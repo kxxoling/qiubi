@@ -100,14 +100,24 @@ export function useMainDataSync(intervalMs?: number) {
         ? { ...base.serverState, ...res.server_state }
         : base.serverState;
 
-      // Sample speed history in one place: shared by the status bar popup and
-      // Dashboard, survives page switches
-      if (serverState)
-        useSpeedHistory.getState().push({
-          t: Date.now(),
-          dl: serverState.dl_info_speed ?? 0,
-          up: serverState.up_info_speed ?? 0,
-        });
+      // Sample speed history strictly from THIS response's server_state, and
+      // only when both speeds are actual numbers: a poll whose delta carries
+      // no speed fields adds no point (the chart flattens across the gap —
+      // coercing absence to 0 drew phantom "speed dropped to zero" dips), and
+      // values identical to the last sample are skipped too (qBT re-sends
+      // unchanged data across our 1s polls; double-entry under a client
+      // timestamp duplicated constant speeds and distorted the timeline —
+      // the API has no server timestamp, so change-arrival time IS the
+      // sample time).
+      const ss = res.server_state;
+      const dl = ss?.dl_info_speed;
+      const up = ss?.up_info_speed;
+      if (typeof dl === "number" && typeof up === "number") {
+        const last = useSpeedHistory.getState().points.at(-1);
+        if (!last || last.dl !== dl || last.up !== up) {
+          useSpeedHistory.getState().push({ t: Date.now(), dl, up });
+        }
+      }
 
       currentRid = res.rid;
       return { torrents, categories, tags, trackers, serverState };
