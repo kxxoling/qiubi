@@ -205,6 +205,11 @@ export function TorrentList() {
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     enableRowSelection: true,
+    // Selection (and React keys) must follow the torrent's identity, not its
+    // position: the default row.id is the array index, so a torrent leaving a
+    // filtered view handed its selection to whichever torrent slid into that
+    // index (e.g. the selected download finishes under a "downloading" filter)
+    getRowId: (row) => row.hash,
   });
 
   const rows = table.getRowModel().rows;
