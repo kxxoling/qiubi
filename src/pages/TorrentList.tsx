@@ -103,6 +103,18 @@ export function TorrentList() {
     splitRef: detailSplitRef,
     startDrag: startDetailDrag,
   } = useDetailSplit();
+
+  // Drawer exit animation: keep the split mounted briefly after close so the
+  // slide-out can finish before unmount (opening mounts it immediately)
+  const [panelRendered, setPanelRendered] = useState(detailPanelOpen);
+  useEffect(() => {
+    if (detailPanelOpen) {
+      setPanelRendered(true);
+      return;
+    }
+    const id = setTimeout(() => setPanelRendered(false), 190);
+    return () => clearTimeout(id);
+  }, [detailPanelOpen]);
   // Sorting lives in the ui store so it survives reloads (useState would
   // reset it on every mount)
   const [focusedIndex, setFocusedIndex] = useState(-1);
@@ -364,11 +376,35 @@ export function TorrentList() {
 
       {/* Desktop: table, switchable to a table|detail-panel vertical split
           (layout ratio persists after drag) */}
+      {/* overflow-hidden clips the sliding drawer at the list bounds so the
+          page never grows a scrollbar mid-animation */}
       {!isMobile && (
-        <div className="min-h-0 flex-1">
-          {!detailPanelOpen ? (
+        <div className="min-h-0 flex-1 overflow-hidden">
+          {!detailPanelOpen && !panelRendered ? (
             tableBlock
-          ) : detailCollapsed ? (
+          ) : !detailPanelOpen ? (
+            /* Exit: the table reclaims full height immediately and the drawer
+               slides down over it as an overlay (no layout space is held, so
+               the list bottom is never blocked during the animation) */
+            <div className="relative h-full">
+              <div className="h-full">{tableBlock}</div>
+              {/* top+bottom insets give the wrapper a definite height (its live
+                  share of the split), so the handle never jumps position */}
+              <div
+                className="drawer-out absolute inset-x-0 bottom-0 z-10 flex flex-col overflow-hidden"
+                style={{ top: `${detailFlex}%` }}
+              >
+                <div className="h-1.5 w-full shrink-0 bg-border" />
+                <div className="min-h-0 flex-1 overflow-hidden">
+                  <TorrentDetailPanel
+                    hash={detailHash}
+                    onClose={() => setDetailPanelOpen(false)}
+                    onCollapse={() => setDetailCollapsed(true)}
+                  />
+                </div>
+              </div>
+            </div>
+          ) : detailPanelOpen && detailCollapsed ? (
             /* Collapsed: a single bottom bar (click to expand the panel) */
             <div className="flex h-full flex-col">
               <div className="min-h-0 flex-1">{tableBlock}</div>
@@ -387,22 +423,30 @@ export function TorrentList() {
               <div className="min-h-[120px]" style={{ flex: `${detailFlex} 1 0%` }}>
                 {tableBlock}
               </div>
+              {/* handle + panel animate as ONE block: the wrapper carries the
+                  keyframe, so translateY(100%) is the drawer's own height and
+                  the handle travels with the panel */}
               <div
-                className="group relative z-10 flex h-1.5 w-full shrink-0 cursor-row-resize items-center justify-center bg-border transition-colors hover:bg-primary/50"
-                title={t("Resize panel")}
-                onMouseDown={startDetailDrag}
-                onDoubleClick={() => setDetailCollapsed(true)}
+                className="drawer-in flex min-h-[160px] flex-col"
+                style={{ flex: `${100 - detailFlex} 1 0%` }}
               >
-                <div className="absolute inset-x-0 -top-1.5 -bottom-1.5" />
-                {/* Collapse arrow (visible on hover) */}
-                <ChevronDown className="absolute size-3 opacity-0 transition-opacity group-hover:opacity-60" />
-              </div>
-              <div className="min-h-[160px]" style={{ flex: `${100 - detailFlex} 1 0%` }}>
-                <TorrentDetailPanel
-                  hash={detailHash}
-                  onClose={() => setDetailPanelOpen(false)}
-                  onCollapse={() => setDetailCollapsed(true)}
-                />
+                <div
+                  className="group relative z-10 flex h-1.5 w-full shrink-0 cursor-row-resize items-center justify-center bg-border transition-colors hover:bg-primary/50"
+                  title={t("Resize panel")}
+                  onMouseDown={startDetailDrag}
+                  onDoubleClick={() => setDetailCollapsed(true)}
+                >
+                  <div className="absolute inset-x-0 -top-1.5 -bottom-1.5" />
+                  {/* Collapse arrow (visible on hover) */}
+                  <ChevronDown className="absolute size-3 opacity-0 transition-opacity group-hover:opacity-60" />
+                </div>
+                <div className="min-h-0 flex-1">
+                  <TorrentDetailPanel
+                    hash={detailHash}
+                    onClose={() => setDetailPanelOpen(false)}
+                    onCollapse={() => setDetailCollapsed(true)}
+                  />
+                </div>
               </div>
             </div>
           )}
