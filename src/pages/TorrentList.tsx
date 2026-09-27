@@ -60,6 +60,10 @@ export function TorrentList() {
     setColumnVisibility,
     columnOrder,
     setColumnOrder,
+    torrentSorting: sorting,
+    setTorrentSorting: setSorting,
+    lastTorrentStatus,
+    setLastTorrentStatus,
     detailPanelOpen,
     setDetailPanelOpen,
     detailHash,
@@ -99,7 +103,8 @@ export function TorrentList() {
     splitRef: detailSplitRef,
     startDrag: startDetailDrag,
   } = useDetailSplit();
-  const [sorting, setSorting] = useState<SortingState>([]);
+  // Sorting lives in the ui store so it survives reloads (useState would
+  // reset it on every mount)
   const [focusedIndex, setFocusedIndex] = useState(-1);
 
   /** Patch URL filter params (replace, no history entries) */
@@ -159,6 +164,16 @@ export function TorrentList() {
       setDetailPanelOpen(false);
     }
   }, [detailHash, torrents, setDetailHash, setDetailPanelOpen]);
+
+  // A fresh open (no ?status= in the URL) seeds the status filter from the
+  // last session; an explicit URL (shared link) always wins
+  // biome-ignore lint/correctness/useExhaustiveDependencies: seeding runs once on mount; the effect itself sets urlSearch.status
+  useEffect(() => {
+    if ((urlSearch.status ?? "all") === "all" && lastTorrentStatus !== "all") {
+      setUrlFilter({ status: lastTorrentStatus });
+    }
+    // mount-only by design: urlSearch.status is set by this very effect
+  }, []);
 
   const filteredData = useFilteredTorrents(torrents, {
     search,
@@ -285,7 +300,10 @@ export function TorrentList() {
     >
       <TorrentToolbar
         status={status}
-        onStatusChange={(v) => setUrlFilter({ status: v ?? "all" })}
+        onStatusChange={(v) => {
+          setLastTorrentStatus(v ?? "all");
+          setUrlFilter({ status: v ?? "all" });
+        }}
         search={search}
         onSearchChange={setSearch}
         selectedCount={selectedHashes.length}
