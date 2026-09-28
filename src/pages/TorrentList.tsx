@@ -81,16 +81,18 @@ export function TorrentList() {
     };
     document.addEventListener("mouseup", clear);
   };
-  /** Move column `from` to `from`→`to`'s position (called on header dragover, live preview) */
-  const moveColumn = (from: string, to: string) => {
-    if (from === to) return;
-    // Empty columnOrder (never dragged): seed from current column definition order
+  /** Commit a header drag: place `from` before/after `targetId` (the list
+   *  stays still during the drag; only the insertion indicator moves) */
+  const dropColumn = (from: string, targetId: string, side: "left" | "right") => {
+    if (from === targetId) return;
     const base = columnOrder.length ? columnOrder : table.getAllLeafColumns().map((c) => c.id);
     const fromIdx = base.indexOf(from);
-    const toIdx = base.indexOf(to);
-    if (fromIdx < 0 || toIdx < 0 || fromIdx === toIdx) return;
+    let insertAt = base.indexOf(targetId) + (side === "right" ? 1 : 0);
+    if (fromIdx < 0 || insertAt - (side === "right" ? 1 : 0) < 0) return;
+    if (fromIdx < insertAt) insertAt -= 1; // removal shifts later positions
+    if (insertAt === fromIdx) return;
     const next = [...base];
-    next.splice(toIdx, 0, next.splice(fromIdx, 1)[0]);
+    next.splice(insertAt, 0, next.splice(fromIdx, 1)[0]);
     setColumnOrder(next);
   };
 
@@ -296,7 +298,7 @@ export function TorrentList() {
       dragColumnRef={dragColumnRef}
       resizingRef={resizingRef}
       markResizing={markResizing}
-      moveColumn={moveColumn}
+      dropColumn={dropColumn}
       onCtxAction={handleCtxAction}
       onOpenDetail={openDetail}
     />

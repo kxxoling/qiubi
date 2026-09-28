@@ -14,9 +14,9 @@
  * are forwarded through a ref that is refreshed on every parent render, so
  * the memo is neither defeated by inline closures nor served stale handlers.
  */
-import { flexRender, type Row, type Table } from "@tanstack/react-table";
+import { flexRender, type Header, type Row, type Table } from "@tanstack/react-table";
 import type * as React from "react";
-import { memo, type RefObject, useRef } from "react";
+import { memo, type RefObject, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   type CtxAction,
@@ -40,6 +40,9 @@ import {
 import { useUiStore } from "@/stores/ui";
 import type { TorrentInfo } from "@/types/qbt";
 
+/** Custom drag image element for the active header drag (removed on dragend) */
+let dragGhostEl: HTMLElement | null = null;
+
 export type TorrentTableProps = {
   table: Table<TorrentInfo>;
   rows: Row<TorrentInfo>[];
@@ -61,9 +64,11 @@ export type TorrentTableProps = {
   setFocusedIndex: (i: number) => void;
   /** Header drag-reorder bindings */
   dragColumnRef: React.MutableRefObject<string | null>;
+
   resizingRef: React.MutableRefObject<boolean>;
   markResizing: () => void;
-  moveColumn: (from: string, to: string) => void;
+  /** Commit a header drag: place `from` before/after `targetId` */
+  dropColumn: (from: string, targetId: string, side: "left" | "right") => void;
   /** Context menu action dispatcher */
   onCtxAction: (action: CtxAction, hashes: string[], row?: TorrentInfo) => void;
   /** Row click/double-click open the bottom detail panel */
@@ -171,13 +176,102 @@ export function TorrentTable({
   dragColumnRef,
   resizingRef,
   markResizing,
-  moveColumn,
+  dropColumn,
   onCtxAction,
   onOpenDetail,
 }: TorrentTableProps) {
   const { t, i18n } = useTranslation();
   const setColumnSizing = useUiStore((s) => s.setColumnSizing);
   const columns = table.getAllLeafColumns();
+  /** Insertion indicator while dragging: edge of which column, which side.
+   *  The list does NOT reorder during the drag — the move happens on drop —
+   *  so the indicator is the only thing that moves. */
+  const [dropHint, setDropHint] = useState<{ id: string; side: "left" | "right" } | null>(null);
+
+  /** Header drag-reorder handlers, hoisted out of the deeply nested header
+   *  JSX. The drag itself never reorders — dragover only moves the insertion
+   *  indicator; the move commits once on drop. */
+  const headerDragHandlers = (h: Header<TorrentInfo, unknown>) => ({
+    onDragStart: (e: React.DragEvent<HTMLElement>) => {
+      // Resize-handle gesture bubbling to the th: cancel the drag so column
+      // resizing keeps working
+      if (resizingRef.current) {
+        e.preventDefault();
+        return;
+      }
+      dragColumnRef.current = h.column.id;
+      e.dataTransfer.effectAllowed = "move";
+      e.currentTarget.setAttribute("data-dragging", "");
+      // Custom drag image: the native one snapshots the whole th — wide
+      // headers dragged a mostly empty rectangle. A compact chip with the
+      // column name reads far better.
+      const label =
+        typeof h.column.columnDef.header === "string" ? h.column.columnDef.header : h.column.id;
+      dragGhostEl = document.createElement("div");
+      dragGhostEl.textContent = label;
+      dragGhostEl.className =
+        "fixed top-0 left-0 z-50 rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground shadow-lg pointer-events-none";
+      dragGhostEl.style.opacity = "0.9";
+      dragGhostEl.style.transform = "translate(-100px, -100px)";
+      document.body.appendChild(dragGhostEl);
+      e.dataTransfer.setDragImage(
+        dragGhostEl,
+        dragGhostEl.offsetWidth / 2,
+        dragGhostEl.offsetHeight / 2,
+      );
+    },
+    onDragOver: (e: React.DragEvent<HTMLElement>) => {
+      e.preventDefault();
+      const from = dragColumnRef.current;
+      const to = h.column.id;
+      if (!from || from === to) {
+        setDropHint(null);
+        return;
+      }
+      // Which side of the target the pointer is on picks the insertion edge;
+      // the order itself stays put until drop (no live reorder → no
+      // oscillation, and the affected columns never shift under the pointer)
+      const rect = e.currentTarget.getBoundingClientRect();
+      // Flip side min(200px, 1/3 width) from the left edge — a midpoint needs
+      // too much travel on wide columns like Name
+      const flipAt = rect.left + Math.min(200, rect.width / 3);
+      const side = e.clientX < flipAt ? "left" : "right";
+      const order = table.getState().columnOrder.length
+        ? table.getState().columnOrder
+        : table.getAllLeafColumns().map((c) => c.id);
+      const fromIdx = order.indexOf(from);
+      const toIdx = order.indexOf(to);
+      if (fromIdx < 0 || toIdx < 0) {
+        setDropHint(null);
+        return;
+      }
+      // Hide the indicator when the drop would be a no-op (inserting right
+      // where the column already is)
+      const insertAt = toIdx + (side === "right" ? 1 : 0);
+      const finalIdx = fromIdx < insertAt ? insertAt - 1 : insertAt;
+      setDropHint(finalIdx === fromIdx ? null : { id: to, side });
+    },
+    onDragLeave: (e: React.DragEvent<HTMLElement>) => {
+      // Leaving a header clears its indicator (entering the neighbor re-sets
+      // it in the same frame)
+      if (!e.currentTarget.contains(e.relatedTarget as Node | null))
+        setDropHint((h2) => (h2?.id === h.column.id ? null : h2));
+    },
+    onDrop: (e: React.DragEvent<HTMLElement>) => {
+      e.preventDefault();
+      const from = dragColumnRef.current;
+      if (from && dropHint && dropHint.id === h.column.id)
+        dropColumn(from, dropHint.id, dropHint.side);
+      setDropHint(null);
+    },
+    onDragEnd: (e: React.DragEvent<HTMLElement>) => {
+      dragColumnRef.current = null;
+      setDropHint(null);
+      dragGhostEl?.remove();
+      dragGhostEl = null;
+      e.currentTarget.removeAttribute("data-dragging");
+    },
+  });
 
   const depsRef = useRef<StableRowDeps>(null as unknown as StableRowDeps);
   depsRef.current = {
@@ -229,34 +323,23 @@ export function TorrentTable({
                     <ContextMenuTrigger
                       render={
                         <TableHead
-                          className={`relative ${h.column.getCanSort() ? "cursor-pointer select-none" : ""} data-dragging:opacity-40`}
+                          className={`relative ${h.column.getCanSort() ? "cursor-pointer select-none" : ""} data-dragging:opacity-45`}
                           style={{ width: h.getSize() }}
                           onClick={h.column.getToggleSortingHandler()}
                           draggable
-                          onDragStart={(e) => {
-                            // Resize-handle gesture bubbling to the th: cancel the
-                            // drag so column resizing keeps working
-                            if (resizingRef.current) {
-                              e.preventDefault();
-                              return;
-                            }
-                            dragColumnRef.current = h.column.id;
-                            e.dataTransfer.effectAllowed = "move";
-                            e.currentTarget.setAttribute("data-dragging", "");
-                          }}
-                          onDragOver={(e) => {
-                            e.preventDefault();
-                            if (dragColumnRef.current)
-                              moveColumn(dragColumnRef.current, h.column.id);
-                          }}
-                          onDragEnd={(e) => {
-                            dragColumnRef.current = null;
-                            e.currentTarget.removeAttribute("data-dragging");
-                          }}
-                          onDrop={(e) => e.preventDefault()}
+                          {...headerDragHandlers(h)}
                         />
                       }
                     >
+                      {dropHint?.id === h.column.id && (
+                        /* Insertion indicator: a primary bar on the edge the
+                           dragged column will land on */
+                        <div
+                          className={`pointer-events-none absolute inset-y-0 z-20 w-[3px] rounded-full bg-primary ${
+                            dropHint.side === "left" ? "left-0" : "right-0"
+                          }`}
+                        />
+                      )}
                       {h.isPlaceholder ? null : (
                         // table-fixed shrinks cells below their content width
                         // when columns are resized narrow; clip the title with
