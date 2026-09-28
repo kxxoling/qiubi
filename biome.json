@@ -83,7 +83,8 @@
     },
     {
       "includes": [
-        "src/pages/TorrentList.tsx"
+        "src/pages/TorrentList.tsx",
+        "src/pages/torrents/DetailDrawer.tsx"
       ],
       "linter": {
         "rules": {

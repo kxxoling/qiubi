@@ -748,3 +748,29 @@
     scrollbar-color: var(--color-border) transparent;
   }
 }
+
+/* Detail drawer: slides up into its slot on open and down out of view on
+   close (pure translate, no opacity; the split stays mounted ~190ms so the
+   exit animation can finish before unmount) */
+@keyframes drawer-in {
+  from {
+    transform: translateY(100%);
+  }
+}
+@keyframes drawer-out {
+  to {
+    transform: translateY(100%);
+  }
+}
+.drawer-in {
+  animation: drawer-in 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.drawer-out {
+  animation: drawer-out 0.19s ease-in forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .drawer-in,
+  .drawer-out {
+    animation: none;
+  }
+}

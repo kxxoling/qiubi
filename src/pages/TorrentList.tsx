@@ -13,12 +13,10 @@ import {
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { ChevronDown, ChevronUp } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { qbtClient } from "@/api/qbt";
 import { TorrentCardList } from "@/components/torrent/TorrentCardList";
-import { TorrentDetailPanel } from "@/components/torrent/TorrentDetailPanel";
 import {
   type DeleteDialogState,
   type LimitDialogState,
@@ -31,9 +29,9 @@ import { useTorrentList } from "@/hooks/useMainDataSync";
 import { cn } from "@/lib/utils";
 import { useUiStore } from "@/stores/ui";
 import { DEFAULT_COLUMN_VISIBILITY, useTorrentColumns } from "./torrents/columns";
+import { DetailDrawer } from "./torrents/DetailDrawer";
 import { TorrentTable } from "./torrents/TorrentTable";
 import { TorrentToolbar } from "./torrents/TorrentToolbar";
-import { useDetailSplit } from "./torrents/useDetailSplit";
 import { useFilteredTorrents } from "./torrents/useFilteredTorrents";
 import { useTorrentActions } from "./torrents/useTorrentActions";
 import { useTorrentKeyboard } from "./torrents/useTorrentKeyboard";
@@ -96,13 +94,6 @@ export function TorrentList() {
     setColumnOrder(next);
   };
 
-  const {
-    collapsed: detailCollapsed,
-    setCollapsed: setDetailCollapsed,
-    flex: detailFlex,
-    splitRef: detailSplitRef,
-    startDrag: startDetailDrag,
-  } = useDetailSplit();
   // Sorting lives in the ui store so it survives reloads (useState would
   // reset it on every mount)
   const [focusedIndex, setFocusedIndex] = useState(-1);
@@ -231,6 +222,26 @@ export function TorrentList() {
   const selectedRows = table.getFilteredSelectedRowModel().rows;
   const selectedHashes = selectedRows.map((r) => r.original.hash);
 
+  // The row click that opens the detail panel also selects the row; when that
+  // torrent is later deselected (ctrl-click toggle, marquee over empty space,
+  // plain click on blank), close the panel instead of stranding it open on an
+  // unselected torrent. Only the selected→deselected transition closes: the
+  // command palette ("@search") opens the panel without selecting anything,
+  // so its torrent was never in the selection and the panel stays.
+  const panelTorrentWasSelectedRef = useRef(false);
+  useEffect(() => {
+    if (!detailHash) {
+      panelTorrentWasSelectedRef.current = false;
+      return;
+    }
+    const isSelected = selectedHashes.includes(detailHash);
+    if (panelTorrentWasSelectedRef.current && !isSelected && detailPanelOpen) {
+      setDetailHash(null);
+      setDetailPanelOpen(false);
+    }
+    panelTorrentWasSelectedRef.current = isSelected;
+  }, [detailHash, detailPanelOpen, selectedHashes, setDetailHash, setDetailPanelOpen]);
+
   const { containerRef, marquee, handleRowClick, handlePointerDown, handleRowContextMenu } =
     useTorrentSelection(table, rows);
 
@@ -342,51 +353,16 @@ export function TorrentList() {
         />
       )}
 
-      {/* Desktop: table, switchable to a table|detail-panel vertical split
-          (layout ratio persists after drag) */}
+      {/* Desktop: table + detail drawer (split state and animations live in
+          the component; TorrentList only decides when it's open and for which
+          torrent) */}
       {!isMobile && (
-        <div className="min-h-0 flex-1">
-          {!detailPanelOpen ? (
-            tableBlock
-          ) : detailCollapsed ? (
-            /* Collapsed: a single bottom bar (click to expand the panel) */
-            <div className="flex h-full flex-col">
-              <div className="min-h-0 flex-1">{tableBlock}</div>
-              <button
-                type="button"
-                className="group flex h-6 w-full shrink-0 cursor-pointer items-center justify-center gap-2 border-t bg-card text-xs font-normal text-muted-foreground transition-colors hover:bg-accent"
-                onClick={() => setDetailCollapsed(false)}
-              >
-                <ChevronUp className="size-3.5 transition-transform group-hover:-translate-y-0.5" />
-                {t("Show detail panel")}
-              </button>
-            </div>
-          ) : (
-            /* Expanded: vertical split + custom drag handle */
-            <div ref={detailSplitRef} className="flex h-full flex-col">
-              <div className="min-h-[120px]" style={{ flex: `${detailFlex} 1 0%` }}>
-                {tableBlock}
-              </div>
-              <div
-                className="group relative z-10 flex h-1.5 w-full shrink-0 cursor-row-resize items-center justify-center bg-border transition-colors hover:bg-primary/50"
-                title={t("Resize panel")}
-                onMouseDown={startDetailDrag}
-                onDoubleClick={() => setDetailCollapsed(true)}
-              >
-                <div className="absolute inset-x-0 -top-1.5 -bottom-1.5" />
-                {/* Collapse arrow (visible on hover) */}
-                <ChevronDown className="absolute size-3 opacity-0 transition-opacity group-hover:opacity-60" />
-              </div>
-              <div className="min-h-[160px]" style={{ flex: `${100 - detailFlex} 1 0%` }}>
-                <TorrentDetailPanel
-                  hash={detailHash}
-                  onClose={() => setDetailPanelOpen(false)}
-                  onCollapse={() => setDetailCollapsed(true)}
-                />
-              </div>
-            </div>
-          )}
-        </div>
+        <DetailDrawer
+          table={tableBlock}
+          hash={detailHash}
+          open={detailPanelOpen}
+          onClose={() => setDetailPanelOpen(false)}
+        />
       )}
 
       <TorrentDialogs
