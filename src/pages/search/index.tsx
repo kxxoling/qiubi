@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearch } from "@tanstack/react-router";
-import { Plus } from "lucide-react";
+import { Puzzle } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -188,7 +188,7 @@ export function SearchPage() {
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold tracking-tight">{t("Search")}</h2>
         <Button variant="outline" size="sm" onClick={() => setPluginDialog(true)}>
-          <Plus className="mr-1 h-4 w-4" />
+          <Puzzle className="size-3.5" />
           {t("Manage Plugins")}
         </Button>
       </div>
