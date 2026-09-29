@@ -110,30 +110,35 @@ export type TransferInfo = {
 };
 
 // --- Torrent ---
-export type TorrentState =
-  | "error"
-  | "missingFiles"
-  | "uploading"
-  /** qBT 5.x: pausedUP renamed to stoppedUP (old value kept for 4.x compat) */
-  | "pausedUP"
-  | "stoppedUP"
-  | "queuedUP"
-  | "stalledUP"
-  | "checkingUP"
-  | "forcedUP"
-  | "allocating"
-  | "downloading"
-  | "metaDL"
-  /** qBT 5.x: pausedDL renamed to stoppedDL (old value kept for 4.x compat) */
-  | "pausedDL"
-  | "stoppedDL"
-  | "queuedDL"
-  | "stalledDL"
-  | "checkingDL"
-  | "forcedDL"
-  | "checkingResumeData"
-  | "moving"
-  | "unknown";
+/** Single source of truth for qBT torrent states — the type derives from it,
+ *  so runtime enumerations (tests, factories) and the type never drift apart */
+export const TORRENT_STATES = [
+  "error",
+  "missingFiles",
+  "uploading",
+  // qBT 5.x: pausedUP renamed to stoppedUP (old value kept for 4.x compat)
+  "pausedUP",
+  "stoppedUP",
+  "queuedUP",
+  "stalledUP",
+  "checkingUP",
+  "forcedUP",
+  "allocating",
+  "downloading",
+  "metaDL",
+  // qBT 5.x: pausedDL renamed to stoppedDL (old value kept for 4.x compat)
+  "pausedDL",
+  "stoppedDL",
+  "queuedDL",
+  "stalledDL",
+  "checkingDL",
+  "forcedDL",
+  "checkingResumeData",
+  "moving",
+  "unknown",
+] as const;
+
+export type TorrentState = (typeof TORRENT_STATES)[number];
 
 export type TorrentInfo = {
   added_on: number;
