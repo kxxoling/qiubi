@@ -9,7 +9,7 @@ import {
   Rss,
   Settings,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { qbtClient } from "@/api/qbt";
@@ -53,7 +53,19 @@ export function RssPage() {
   const rssEnabled = prefs ? (prefs as AppPreferences).rss_processing_enabled !== false : true;
 
   const flat = feeds ? flattenFeeds(feeds) : [];
-  const selected = flat.find((f) => f.path === selectedFeed);
+
+  // Select the first feed by default once feeds load (a folder is not a feed;
+  // also recovers selection when the selected feed disappears)
+  useEffect(() => {
+    if (!feeds) return;
+    const f = flattenFeeds(feeds);
+    const first = f.find((x) => !x.feed.children) ?? f[0];
+    if (!first) return;
+    if (selectedFeed && f.some((x) => x.path === selectedFeed)) return;
+    setSelectedFeed(first.path);
+  }, [feeds, selectedFeed]);
+
+  const selected = flat.find((x) => x.path === selectedFeed);
   const selectedArticles: RssArticle[] = selected?.feed.articles ?? [];
   const feedOnly = flat.filter((f) => !f.feed.children);
 
