@@ -6,9 +6,11 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { qbtClient } from "@/api/qbt";
 import { PluginManager } from "@/components/search/PluginManager";
+import { SearchHistory } from "@/components/search/SearchHistory";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { pollWithBackoff } from "@/hooks/useMainDataSync";
+import { useSearchHistory } from "@/hooks/useSearchHistory";
 import type { SearchResult } from "@/types/qbt";
 import { ResultsTable } from "./ResultsTable";
 import { SearchForm } from "./SearchForm";
@@ -32,6 +34,13 @@ export function SearchPage() {
   const [activeId, setActiveId] = useState<number | null>(null);
   const [allResults, setAllResults] = useState<SearchResult[]>([]);
   const offsetRef = useRef(0);
+
+  const {
+    entries: recent,
+    add: addRecent,
+    remove: removeRecent,
+    clear: clearRecent,
+  } = useSearchHistory();
 
   const [pluginDialog, setPluginDialog] = useState(false);
 
@@ -74,17 +83,31 @@ export function SearchPage() {
 
   const isRunning = status?.[0]?.status === "Running";
 
-  const startSearch = useCallback(async () => {
-    if (!pattern.trim()) return;
-    try {
-      const { id } = await qbtClient.startSearch(pattern, pluginFilter, category);
-      setActiveId(id);
-      setAllResults([]);
-      offsetRef.current = 0;
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e));
-    }
-  }, [pattern, category, pluginFilter]);
+  const startSearch = useCallback(
+    async (patternOverride?: string) => {
+      const p = (patternOverride ?? pattern).trim();
+      if (!p) return;
+      try {
+        const { id } = await qbtClient.startSearch(p, pluginFilter, category);
+        addRecent(p);
+        setActiveId(id);
+        setAllResults([]);
+        offsetRef.current = 0;
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : String(e));
+      }
+    },
+    [pattern, category, pluginFilter, addRecent],
+  );
+
+  // Re-run a recent search from a history chip
+  const rerunSearch = useCallback(
+    (term: string) => {
+      setPattern(term);
+      startSearch(term);
+    },
+    [startSearch],
+  );
 
   // Auto-start one search when arriving via a ?q= navigation
   useEffect(() => {
@@ -160,6 +183,13 @@ export function SearchPage() {
         onStart={startSearch}
         onStop={stopSearch}
         onClear={clearSearch}
+      />
+
+      <SearchHistory
+        entries={recent}
+        onSelect={rerunSearch}
+        onRemove={removeRecent}
+        onClear={clearRecent}
       />
 
       <ResultsTable

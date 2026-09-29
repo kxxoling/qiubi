@@ -131,12 +131,12 @@ export function SearchForm({
               {t("Completed")}
             </Badge>
           )}
-          <Button variant="ghost" size="icon" onClick={onClear}>
+          <Button variant="ghost" size="icon" aria-label={t("Clear")} onClick={onClear}>
             <X className="h-4 w-4" />
           </Button>
         </div>
       ) : (
-        <Button onClick={onStart} disabled={!pattern.trim()}>
+        <Button onClick={() => onStart()} disabled={!pattern.trim()}>
           {t("Search")}
         </Button>
       )}

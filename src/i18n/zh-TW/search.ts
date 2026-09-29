@@ -21,6 +21,8 @@ export default {
   Plugins: "外掛",
   "Only enabled": "僅已啟用",
   "All plugins": "所有外掛",
+  "Recent searches": "最近搜尋",
+  "Clear search history": "清空搜尋記錄",
   Install: "安裝",
   Uninstall: "解除安裝",
   "Update Plugins": "更新外掛",

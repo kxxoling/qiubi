@@ -22,6 +22,8 @@ export default {
   Plugins: "Plugins",
   "Only enabled": "Apenas habilitados",
   "All plugins": "Todos os plugins",
+  "Recent searches": "Pesquisas recentes",
+  "Clear search history": "Limpar histórico de pesquisa",
   Install: "Instalar",
   Uninstall: "Desinstalar",
   "Update Plugins": "Atualizar plugins",

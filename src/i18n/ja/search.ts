@@ -22,6 +22,8 @@ export default {
   Plugins: "プラグイン",
   "Only enabled": "有効なもののみ",
   "All plugins": "すべてのプラグイン",
+  "Recent searches": "最近の検索",
+  "Clear search history": "検索履歴を消去",
   Install: "インストール",
   Uninstall: "アンインストール",
   "Update Plugins": "プラグインを更新",

@@ -22,6 +22,8 @@ export default {
   Plugins: "Плагины",
   "Only enabled": "Только включённые",
   "All plugins": "Все плагины",
+  "Recent searches": "Недавние запросы",
+  "Clear search history": "Очистить историю поиска",
   Install: "Установить",
   Uninstall: "Удалить",
   "Update Plugins": "Обновить плагины",

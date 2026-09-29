@@ -22,6 +22,8 @@ export default {
   Plugins: "플러그인",
   "Only enabled": "활성화된 것만",
   "All plugins": "모든 플러그인",
+  "Recent searches": "최근 검색",
+  "Clear search history": "검색 기록 지우기",
   Install: "설치",
   Uninstall: "제거",
   "Update Plugins": "플러그인 업데이트",

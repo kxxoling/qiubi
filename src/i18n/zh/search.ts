@@ -21,6 +21,8 @@ export default {
   Plugins: "插件",
   "Only enabled": "仅已启用",
   "All plugins": "所有插件",
+  "Recent searches": "最近搜索",
+  "Clear search history": "清空搜索记录",
   Install: "安装",
   Uninstall: "卸载",
   "Update Plugins": "更新插件",
