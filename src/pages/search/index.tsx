@@ -27,6 +27,8 @@ export function SearchPage() {
   const urlSearch = useSearch({ strict: false }) as { q?: string; category?: string };
   const [pattern, setPattern] = useState(urlSearch.q ?? "");
   const [category, setCategory] = useState(urlSearch.category ?? "all");
+  // Official WebUI default: first option "Only enabled"
+  const [pluginFilter, setPluginFilter] = useState("enabled");
   const [autoStarted, setAutoStarted] = useState(false);
   const [activeId, setActiveId] = useState<number | null>(null);
   const [allResults, setAllResults] = useState<SearchResult[]>([]);
@@ -39,6 +41,13 @@ export function SearchPage() {
     queryKey: ["search-plugins"],
     queryFn: () => qbtClient.getSearchPlugins(),
   });
+
+  // Drop a stale selection: plugin got disabled or uninstalled meanwhile
+  useEffect(() => {
+    if (!plugins || pluginFilter === "enabled" || pluginFilter === "all") return;
+    const enabled = plugins.some((p) => p.enabled && p.name === pluginFilter);
+    if (!enabled) setPluginFilter("enabled");
+  }, [plugins, pluginFilter]);
 
   // Search status polling
   const { data: status } = useQuery({
@@ -69,14 +78,14 @@ export function SearchPage() {
   const startSearch = useCallback(async () => {
     if (!pattern.trim()) return;
     try {
-      const { id } = await qbtClient.startSearch(pattern, "all", category);
+      const { id } = await qbtClient.startSearch(pattern, pluginFilter, category);
       setActiveId(id);
       setAllResults([]);
       offsetRef.current = 0;
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e));
     }
-  }, [pattern, category]);
+  }, [pattern, category, pluginFilter]);
 
   // Auto-start one search when arriving via a ?q= navigation
   useEffect(() => {
@@ -142,10 +151,13 @@ export function SearchPage() {
       <SearchForm
         pattern={pattern}
         category={category}
+        pluginFilter={pluginFilter}
+        plugins={plugins}
         isRunning={isRunning}
         hasActiveSearch={activeId !== null}
         onPatternChange={setPattern}
         onCategoryChange={setCategory}
+        onPluginFilterChange={setPluginFilter}
         onStart={startSearch}
         onStop={stopSearch}
         onClear={clearSearch}

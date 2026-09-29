@@ -1,4 +1,5 @@
 import { Loader2, Search, X } from "lucide-react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,9 +8,11 @@ import {
   Select,
   SelectContent,
   SelectItem,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type { SearchPlugin } from "@/types/qbt";
 
 const CATEGORIES = [
   { value: "all", label: "All categories" },
@@ -22,31 +25,56 @@ const CATEGORIES = [
   { value: "books", label: "Books" },
 ];
 
+// Natural sort for plugin names, mirroring the official WebUI
+const pluginCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
+
 interface SearchFormProps {
   pattern: string;
   category: string;
+  pluginFilter: string;
+  plugins?: SearchPlugin[];
   isRunning: boolean;
   hasActiveSearch: boolean;
   onPatternChange: (value: string) => void;
   onCategoryChange: (value: string) => void;
+  onPluginFilterChange: (value: string) => void;
   onStart: () => void;
   onStop: () => void;
   onClear: () => void;
 }
 
-/** Search bar: category select + pattern input + start/stop/clear controls */
+/** Search bar: category + plugin selects, pattern input, start/stop/clear controls */
 export function SearchForm({
   pattern,
   category,
+  pluginFilter,
+  plugins,
   isRunning,
   hasActiveSearch,
   onPatternChange,
   onCategoryChange,
+  onPluginFilterChange,
   onStart,
   onStop,
   onClear,
 }: SearchFormProps) {
   const { t } = useTranslation();
+
+  // Official WebUI dropdown: enabled plugins only, alphabetically sorted
+  const enabledPlugins = useMemo(
+    () =>
+      (plugins ?? [])
+        .filter((p) => p.enabled)
+        .sort((a, b) => pluginCollator.compare(a.fullName || a.name, b.fullName || b.name)),
+    [plugins],
+  );
+
+  const pluginFilterLabel =
+    pluginFilter === "enabled"
+      ? t("Only enabled")
+      : pluginFilter === "all"
+        ? t("All plugins")
+        : plugins?.find((p) => p.name === pluginFilter)?.fullName || pluginFilter;
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -60,6 +88,21 @@ export function SearchForm({
           {CATEGORIES.map((c) => (
             <SelectItem key={c.value} value={c.value}>
               {t(c.label)}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Select value={pluginFilter} onValueChange={(v) => onPluginFilterChange(v ?? "enabled")}>
+        <SelectTrigger size="sm" className="w-40 shrink-0" aria-label={t("Plugins")}>
+          <SelectValue>{pluginFilterLabel}</SelectValue>
+        </SelectTrigger>
+        <SelectContent className="w-48">
+          <SelectItem value="enabled">{t("Only enabled")}</SelectItem>
+          <SelectItem value="all">{t("All plugins")}</SelectItem>
+          {enabledPlugins.length > 0 && <SelectSeparator />}
+          {enabledPlugins.map((p) => (
+            <SelectItem key={p.name} value={p.name}>
+              {p.fullName || p.name}
             </SelectItem>
           ))}
         </SelectContent>

@@ -13,6 +13,19 @@ test("search page renders", async ({ page }) => {
   await expect(page.getByPlaceholder(/Search torrents/i)).toBeVisible();
 });
 
+test("plugins select lists special options separated from individual plugins", async ({ page }) => {
+  const trigger = page.getByRole("combobox", { name: "Plugins" });
+  await expect(trigger).toHaveText(/Only enabled/i);
+  await trigger.click();
+  await expect(page.getByRole("option", { name: "Only enabled", exact: true })).toBeVisible();
+  await expect(page.getByRole("option", { name: "All plugins", exact: true })).toBeVisible();
+  // Enabled plugins only, alphabetically
+  await expect(page.getByRole("option", { name: "The Pirate Bay", exact: true })).toBeVisible();
+  await expect(page.getByRole("option", { name: "Legit Torrents" })).toHaveCount(0);
+  // Separator between the two special options and the plugin list
+  await expect(page.locator("[data-slot='select-separator']")).toBeVisible();
+});
+
 test("manage plugins button opens dialog", async ({ page }) => {
   await page.getByRole("button", { name: /Manage Plugins/i }).click();
   await expect(page.getByRole("heading", { name: /Manage Plugins/i })).toBeVisible();
