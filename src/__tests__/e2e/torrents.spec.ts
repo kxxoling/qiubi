@@ -201,6 +201,25 @@ test("marquee can start on a row (drag threshold), release click is swallowed", 
   await expect(page.locator("[data-slot=detail-panel-root]")).toHaveCount(0);
 });
 
+test("opening the detail drawer does not remount the table", async ({ page }) => {
+  // Re-parenting the table when the drawer opens (branch-swapped JSX) unmounts
+  // and rebuilds every row — a multi-hundred-ms stall before the click's own
+  // checkbox paints. Mark the table body: if the subtree were rebuilt, the
+  // marker would detach with the old nodes.
+  await expect(page.getByText("Ubuntu Desktop 24.04")).toBeVisible();
+  await page.evaluate(() => {
+    document.querySelector("tbody")?.setAttribute("data-mount-marker", "1");
+  });
+
+  await page.getByText("Ubuntu Desktop 24.04").click();
+  await expect(page.locator("[data-slot=detail-panel-root]")).toBeVisible();
+
+  const markerSurvived = await page.evaluate(() =>
+    Boolean(document.querySelector('tbody[data-mount-marker="1"]')),
+  );
+  expect(markerSurvived).toBe(true);
+});
+
 test("ctrl-click selects multiple rows", async ({ page }) => {
   await page.getByText("Ubuntu Desktop 24.04").click();
   // ControlOrMeta: on macOS Ctrl+click is the context menu; the multi-select
