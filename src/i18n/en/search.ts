@@ -3,7 +3,7 @@ import type { Dictionary } from "@/i18n/types";
 
 export default {
   "Search results": "Search results",
-  "Searching...": "Searching...",
+  Searching: "Searching",
   "Refine in search page": "Refine in search page",
   Movies: "Movies",
   "TV shows": "TV shows",
@@ -19,6 +19,11 @@ export default {
     "No search plugins enabled — open Search page to configure",
   "Manage Plugins": "Manage Plugins",
   "Plugin URL": "Plugin URL",
+  Plugins: "Plugins",
+  "Only enabled": "Only enabled",
+  "All plugins": "All plugins",
+  "Recent searches": "Recent searches",
+  "Clear search history": "Clear search history",
   Install: "Install",
   Uninstall: "Uninstall",
   "Update Plugins": "Update Plugins",

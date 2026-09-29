@@ -3,7 +3,7 @@ import type { Dictionary } from "@/i18n/types";
 
 export default {
   "Search results": "Результаты поиска",
-  "Searching...": "Поиск…",
+  Searching: "Поиск",
   "Refine in search page": "Уточнить на странице поиска",
   Movies: "Фильмы",
   "TV shows": "Сериалы",
@@ -19,6 +19,11 @@ export default {
     "Поисковые плагины отключены — настройте на странице Поиск",
   "Manage Plugins": "Управление плагинами",
   "Plugin URL": "URL плагина",
+  Plugins: "Плагины",
+  "Only enabled": "Только включённые",
+  "All plugins": "Все плагины",
+  "Recent searches": "Недавние запросы",
+  "Clear search history": "Очистить историю поиска",
   Install: "Установить",
   Uninstall: "Удалить",
   "Update Plugins": "Обновить плагины",

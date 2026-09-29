@@ -3,7 +3,7 @@ import type { Dictionary } from "@/i18n/types";
 
 export default {
   "Search results": "검색 결과",
-  "Searching...": "검색 중…",
+  Searching: "검색 중",
   "Refine in search page": "검색 페이지에서 정제",
   Movies: "영화",
   "TV shows": "TV 시리즈",
@@ -19,6 +19,11 @@ export default {
     "활성화된 검색 플러그인이 없습니다 — 검색 페이지에서 설정하세요",
   "Manage Plugins": "플러그인 관리",
   "Plugin URL": "플러그인 URL",
+  Plugins: "플러그인",
+  "Only enabled": "활성화된 것만",
+  "All plugins": "모든 플러그인",
+  "Recent searches": "최근 검색",
+  "Clear search history": "검색 기록 지우기",
   Install: "설치",
   Uninstall: "제거",
   "Update Plugins": "플러그인 업데이트",

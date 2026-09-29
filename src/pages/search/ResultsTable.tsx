@@ -1,4 +1,4 @@
-import { Download, ExternalLink, Loader2 } from "lucide-react";
+import { Download, ExternalLink } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
@@ -124,10 +124,6 @@ export function ResultsTable({
               ))}
             </TableBody>
           </Table>
-          <div className="border-t px-4 py-2 text-xs text-muted-foreground">
-            {results.length} {t("results")}
-            {isRunning && <Loader2 className="ml-2 inline h-3 w-3 animate-spin" />}
-          </div>
         </div>
       ) : hasActiveSearch && !isRunning ? (
         <div className="py-8 text-center text-sm text-muted-foreground">

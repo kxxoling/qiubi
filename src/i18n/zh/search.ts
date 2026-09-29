@@ -3,7 +3,7 @@ import type { Dictionary } from "@/i18n/types";
 
 export default {
   "Search results": "搜索结果",
-  "Searching...": "搜索中…",
+  Searching: "搜索中",
   "Refine in search page": "在搜索页精炼",
   Movies: "电影",
   "TV shows": "剧集",
@@ -18,6 +18,11 @@ export default {
   "No search plugins enabled — open Search page to configure": "没有启用的搜索插件，去搜索页配置",
   "Manage Plugins": "管理插件",
   "Plugin URL": "插件 URL",
+  Plugins: "插件",
+  "Only enabled": "仅已启用",
+  "All plugins": "所有插件",
+  "Recent searches": "最近搜索",
+  "Clear search history": "清空搜索记录",
   Install: "安装",
   Uninstall: "卸载",
   "Update Plugins": "更新插件",
