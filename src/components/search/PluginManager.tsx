@@ -9,10 +9,10 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { qbtClient } from "@/api/qbt";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -40,9 +40,9 @@ export function PluginManager({
     enabled: open,
   });
 
-  const togglePlugin = async (plugin: SearchPlugin) => {
+  const togglePlugin = async (plugin: SearchPlugin, enable: boolean) => {
     try {
-      await qbtClient.enableSearchPlugin([plugin.name], !plugin.enabled);
+      await qbtClient.enableSearchPlugin([plugin.name], enable);
       await qc.invalidateQueries({ queryKey: ["search-plugins"] });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e));
@@ -126,13 +126,11 @@ export function PluginManager({
                     </TableCell>
                     <TableCell className="text-xs tabular-nums">{p.version}</TableCell>
                     <TableCell>
-                      <Badge
-                        variant={p.enabled ? "default" : "secondary"}
-                        className="cursor-pointer text-[10px]"
-                        onClick={() => togglePlugin(p)}
-                      >
-                        {p.enabled ? t("Enabled") : t("Disabled")}
-                      </Badge>
+                      <Switch
+                        checked={p.enabled}
+                        onCheckedChange={(v) => togglePlugin(p, v === true)}
+                        aria-label={p.fullName || p.name}
+                      />
                     </TableCell>
                     <TableCell>
                       <Button

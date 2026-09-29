@@ -39,11 +39,24 @@ test("plugin list shows installed plugins", async ({ page }) => {
   await expect(dialog.getByText("Legit Torrents")).toBeVisible();
 });
 
-test("enabled/disabled badges visible", async ({ page }) => {
+test("status column switches reflect plugin state and toggle it", async ({ page }) => {
+  const enableBodies: string[] = [];
+  await page.route("**/api/v2/search/enablePlugin", (route) => {
+    enableBodies.push(route.request().postData() ?? "");
+    return route.fulfill({ status: 200, contentType: "text/plain", body: "Ok." });
+  });
+
   await page.getByRole("button", { name: /Manage Plugins/i }).click();
   const dialog = page.getByRole("dialog");
-  await expect(dialog.getByText("Enabled", { exact: true }).first()).toBeVisible();
-  await expect(dialog.getByText("Disabled", { exact: true })).toBeVisible();
+
+  await expect(dialog.getByRole("switch", { name: "The Pirate Bay" })).toBeChecked();
+  const legit = dialog.getByRole("switch", { name: "Legit Torrents" });
+  await expect(legit).not.toBeChecked();
+
+  // Plain click: the mock still serves Legit Torrents as disabled after the
+  // refetch, so the switch snaps back — only the request body is asserted
+  await legit.click();
+  await expect.poll(() => enableBodies).toContain("names=legittorrents&enable=true");
 });
 
 test("install plugin input exists", async ({ page }) => {
