@@ -1,7 +1,6 @@
-import { Loader2, Search, X } from "lucide-react";
+import { Loader2, Search, Square } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -34,29 +33,25 @@ interface SearchFormProps {
   pluginFilter: string;
   plugins?: SearchPlugin[];
   isRunning: boolean;
-  hasActiveSearch: boolean;
   onPatternChange: (value: string) => void;
   onCategoryChange: (value: string) => void;
   onPluginFilterChange: (value: string) => void;
   onStart: () => void;
   onStop: () => void;
-  onClear: () => void;
 }
 
-/** Search bar: category + plugin selects, pattern input, start/stop/clear controls */
+/** Search bar: category + plugin selects, pattern input, start/stop control */
 export function SearchForm({
   pattern,
   category,
   pluginFilter,
   plugins,
   isRunning,
-  hasActiveSearch,
   onPatternChange,
   onCategoryChange,
   onPluginFilterChange,
   onStart,
   onStop,
-  onClear,
 }: SearchFormProps) {
   const { t } = useTranslation();
 
@@ -119,22 +114,21 @@ export function SearchForm({
           }}
         />
       </div>
-      {hasActiveSearch ? (
-        <div className="flex items-center gap-1">
-          {isRunning ? (
-            <Button variant="outline" size="sm" onClick={onStop}>
-              <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-              {t("Stop")}
-            </Button>
-          ) : (
-            <Badge variant="secondary" className="text-xs">
-              {t("Completed")}
-            </Badge>
-          )}
-          <Button variant="ghost" size="icon" aria-label={t("Clear")} onClick={onClear}>
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
+      {isRunning ? (
+        // Running state lives in the Search button, turning into Stop on
+        // hover (Button base provides group/button). No per-plugin progress:
+        // the API doesn't expose it — /search/status's `total` is the result
+        // count, which the recent-searches row displays instead
+        <Button onClick={onStop} title={t("Stop")}>
+          <span className="inline-flex items-center gap-1.5 group-hover/button:hidden">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            {t("Searching")}
+          </span>
+          <span className="hidden items-center gap-1.5 group-hover/button:inline-flex">
+            <Square className="h-3 w-3 fill-current" />
+            {t("Stop")}
+          </span>
+        </Button>
       ) : (
         <Button onClick={() => onStart()} disabled={!pattern.trim()}>
           {t("Search")}

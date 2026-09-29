@@ -136,7 +136,7 @@ export function OnlineSearchSection({
     return (
       <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
         <span className="h-3 w-3 animate-ping rounded-full bg-primary" />
-        {t("Searching...")}
+        {t("Searching")}
       </div>
     );
   }

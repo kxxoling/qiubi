@@ -3,7 +3,7 @@ import type { Dictionary } from "@/i18n/types";
 
 export default {
   "Search results": "검색 결과",
-  "Searching...": "검색 중…",
+  Searching: "검색 중",
   "Refine in search page": "검색 페이지에서 정제",
   Movies: "영화",
   "TV shows": "TV 시리즈",

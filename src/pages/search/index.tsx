@@ -82,6 +82,9 @@ export function SearchPage() {
   });
 
   const isRunning = status?.[0]?.status === "Running";
+  // /search/status's `total` is the number of results returned so far — shown
+  // at the right end of the recent-searches row while a search is active
+  const resultCount = activeId !== null ? (status?.[0]?.total ?? allResults.length) : null;
 
   const startSearch = useCallback(
     async (patternOverride?: string) => {
@@ -89,6 +92,9 @@ export function SearchPage() {
       if (!p) return;
       try {
         const { id } = await qbtClient.startSearch(p, pluginFilter, category);
+        // The form no longer has a clear button: replacing means deleting the
+        // previous job server-side instead of leaking it
+        if (activeId !== null) qbtClient.deleteSearch(activeId).catch(() => {});
         addRecent(p);
         setActiveId(id);
         setAllResults([]);
@@ -97,7 +103,7 @@ export function SearchPage() {
         toast.error(e instanceof Error ? e.message : String(e));
       }
     },
-    [pattern, category, pluginFilter, addRecent],
+    [pattern, category, pluginFilter, activeId, addRecent],
   );
 
   // Re-run a recent search from a history chip
@@ -141,15 +147,6 @@ export function SearchPage() {
     }
   };
 
-  const clearSearch = () => {
-    if (activeId) {
-      qbtClient.deleteSearch(activeId).catch(() => {});
-    }
-    setActiveId(null);
-    setAllResults([]);
-    setPattern("");
-  };
-
   const _updatePlugins = async () => {
     try {
       await qbtClient.updateSearchPlugins();
@@ -176,21 +173,37 @@ export function SearchPage() {
         pluginFilter={pluginFilter}
         plugins={plugins}
         isRunning={isRunning}
-        hasActiveSearch={activeId !== null}
         onPatternChange={setPattern}
         onCategoryChange={setCategory}
         onPluginFilterChange={setPluginFilter}
         onStart={startSearch}
         onStop={stopSearch}
-        onClear={clearSearch}
       />
 
-      <SearchHistory
-        entries={recent}
-        onSelect={rerunSearch}
-        onRemove={removeRecent}
-        onClear={clearRecent}
-      />
+      {/* Recent-search chips (left) and the live result total (right) are
+          separate concerns sharing one row: the count pairs with the results
+          table below, not with the history */}
+      {(recent.length > 0 || resultCount !== null) && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <SearchHistory
+            entries={recent}
+            onSelect={rerunSearch}
+            onRemove={removeRecent}
+            onClear={clearRecent}
+          />
+          {resultCount !== null && (
+            <span
+              className={
+                recent.length > 0
+                  ? "ml-auto min-w-fit border-l border-border/60 pl-3 text-xs tabular-nums text-muted-foreground"
+                  : "ml-auto text-xs tabular-nums text-muted-foreground"
+              }
+            >
+              {resultCount} {t("results")}
+            </span>
+          )}
+        </div>
+      )}
 
       <ResultsTable
         results={allResults}

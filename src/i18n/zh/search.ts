@@ -3,7 +3,7 @@ import type { Dictionary } from "@/i18n/types";
 
 export default {
   "Search results": "搜索结果",
-  "Searching...": "搜索中…",
+  Searching: "搜索中",
   "Refine in search page": "在搜索页精炼",
   Movies: "电影",
   "TV shows": "剧集",

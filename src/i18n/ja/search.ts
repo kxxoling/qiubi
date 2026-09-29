@@ -3,7 +3,7 @@ import type { Dictionary } from "@/i18n/types";
 
 export default {
   "Search results": "検索結果",
-  "Searching...": "検索中…",
+  Searching: "検索中",
   "Refine in search page": "検索ページで絞り込む",
   Movies: "映画",
   "TV shows": "TV シリーズ",

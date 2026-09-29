@@ -3,7 +3,7 @@ import type { Dictionary } from "@/i18n/types";
 
 export default {
   "Search results": "Resultados da busca",
-  "Searching...": "Buscando...",
+  Searching: "Buscando",
   "Refine in search page": "Refinar na página de busca",
   Movies: "Filmes",
   "TV shows": "Séries",

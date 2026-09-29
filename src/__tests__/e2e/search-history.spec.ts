@@ -21,18 +21,28 @@ test("successful searches are recorded as chips", async ({ page }) => {
 });
 
 test("chip click refills the input and re-runs the search", async ({ page }) => {
+  const started: string[] = [];
+  await page.route("**/api/v2/search/start", (route) => {
+    started.push(route.request().postData() ?? "");
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ id: 42 }),
+    });
+  });
+
   await page.getByPlaceholder(/Search torrents/i).fill("ubuntu");
   await page.getByRole("button", { name: "Search", exact: true }).click();
   await expect(page.getByRole("button", { name: "ubuntu", exact: true })).toBeVisible();
 
-  // Reset the active search so the pattern input is empty again
-  await page.getByRole("button", { name: "Clear", exact: true }).click();
-  await expect(page.getByPlaceholder(/Search torrents/i)).toHaveValue("");
-
+  // Run a different search, then come back to "ubuntu" via its chip
+  await page.getByPlaceholder(/Search torrents/i).fill("debian");
+  await page.getByRole("button", { name: "Search", exact: true }).click();
   await page.getByRole("button", { name: "ubuntu", exact: true }).click();
+
   await expect(page.getByPlaceholder(/Search torrents/i)).toHaveValue("ubuntu");
-  // Search restarted and (per the mocked status) already completed
-  await expect(page.getByText("Completed")).toBeVisible();
+  const posted = started.map((body) => new URLSearchParams(body).get("pattern"));
+  expect(posted).toEqual(["ubuntu", "debian", "ubuntu"]);
 });
 
 test("history persists across reloads", async ({ page }) => {
@@ -58,8 +68,6 @@ test("clear wipes the whole history", async ({ page }) => {
     await page.getByPlaceholder(/Search torrents/i).fill(term);
     await page.getByRole("button", { name: "Search", exact: true }).click();
     await expect(page.getByRole("button", { name: term, exact: true })).toBeVisible();
-    // The Search button only shows while no search is active — reset between runs
-    await page.getByRole("button", { name: "Clear", exact: true }).click();
   }
 
   await page.getByRole("button", { name: "Clear search history" }).click();
