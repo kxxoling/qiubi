@@ -6,7 +6,6 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { qbtClient } from "@/api/qbt";
 import { PluginManager } from "@/components/search/PluginManager";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { pollWithBackoff } from "@/hooks/useMainDataSync";
@@ -162,19 +161,6 @@ export function SearchPage() {
         onStop={stopSearch}
         onClear={clearSearch}
       />
-
-      {/* Plugin status */}
-      {plugins && plugins.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {plugins
-            .filter((p) => p.enabled)
-            .map((p) => (
-              <Badge key={p.name} variant="outline" className="text-[10px]">
-                {p.fullName || p.name}
-              </Badge>
-            ))}
-        </div>
-      )}
 
       <ResultsTable
         results={allResults}
