@@ -15,7 +15,10 @@ type Marquee = { x0: number; y0: number; x1: number; y1: number } | null;
 export function useTorrentSelection(table: Table<TorrentInfo>, rows: Row<TorrentInfo>[]) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [marquee, setMarquee] = useState<Marquee>(null);
-  const anchorIndexRef = useRef(-1);
+  /** Shift-range anchor, by torrent hash: rows reindex on delete/filter/sort,
+      so an index-keyed anchor would drift onto whichever torrent slid into
+      that slot between clicks */
+  const anchorHashRef = useRef<string | null>(null);
   /** Marquee crossed the drag threshold: the click fired after this press-release must be swallowed */
   const suppressClickRef = useRef(false);
 
@@ -26,17 +29,23 @@ export function useTorrentSelection(table: Table<TorrentInfo>, rows: Row<Torrent
       const row = rows[idx];
       if (!row) return true;
 
-      if (e.shiftKey && anchorIndexRef.current >= 0) {
-        const [from, to] = [anchorIndexRef.current, idx].sort((a, b) => a - b);
-        table.setRowSelection(() => {
-          const next: Record<string, boolean> = {};
-          for (let i = from; i <= to; i++) next[rows[i].id] = true;
-          return next;
-        });
-        return true;
+      if (e.shiftKey && anchorHashRef.current != null) {
+        // Resolve the anchor's CURRENT position — it may have moved (or left
+        // the filtered view) since it was clicked
+        const anchorIdx = rows.findIndex((r) => r.original.hash === anchorHashRef.current);
+        if (anchorIdx >= 0) {
+          const [from, to] = [anchorIdx, idx].sort((a, b) => a - b);
+          table.setRowSelection(() => {
+            const next: Record<string, boolean> = {};
+            for (let i = from; i <= to; i++) next[rows[i].id] = true;
+            return next;
+          });
+          return true;
+        }
+        // Anchor torrent left the list → fall through to plain-click semantics
       }
 
-      anchorIndexRef.current = idx;
+      anchorHashRef.current = row.original.hash;
       if (e.ctrlKey || e.metaKey) {
         row.toggleSelected(!row.getIsSelected());
       } else {
@@ -90,16 +99,19 @@ export function useTorrentSelection(table: Table<TorrentInfo>, rows: Row<Torrent
         const top = Math.min(y0, y1);
         const bottom = Math.max(y0, y1);
         const next: Record<string, boolean> = {};
+        // Rows identify themselves by hash on the DOM node: this listener is
+        // registered once at pointerdown and outlives re-renders, so mapping a
+        // row index through the captured `rows` array would misresolve
+        // whenever a poll re-sorts the list mid-drag
         for (const tr of container.querySelectorAll<HTMLTableRowElement>(
-          "tbody tr[data-row-idx]",
+          "tbody tr[data-row-hash]",
         )) {
           const r = tr.getBoundingClientRect();
           const ry0 = r.top - rect.top;
           const rx0 = r.left - rect.left;
           const intersects =
             right > rx0 && left < rx0 + r.width && bottom > ry0 && top < ry0 + r.height;
-          const idx = Number(tr.dataset.rowIdx);
-          if (intersects && rows[idx]) next[rows[idx].id] = true;
+          if (intersects && tr.dataset.rowHash) next[tr.dataset.rowHash] = true;
         }
         table.setRowSelection(next);
       };
@@ -119,7 +131,7 @@ export function useTorrentSelection(table: Table<TorrentInfo>, rows: Row<Torrent
       window.addEventListener("pointermove", move);
       window.addEventListener("pointerup", up);
     },
-    [rows, table],
+    [table],
   );
 
   /** Right-click: on an unselected row → select only that row; if already selected keep the multi-selection */

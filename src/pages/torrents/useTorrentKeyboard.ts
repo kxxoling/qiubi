@@ -29,7 +29,7 @@ export function useTorrentKeyboard({
   table: Table<TorrentInfo>;
   rows: Row<TorrentInfo>[];
   focusedIndex: number;
-  setFocusedIndex: React.Dispatch<React.SetStateAction<number>>;
+  setFocusedIndex: (i: number) => void;
   selectedHashes: string[];
   doAction: (fn: () => Promise<void>, label: string) => Promise<void>;
   batchAction: (fn: (hashes: string[]) => Promise<void>, label: string) => Promise<void>;
@@ -60,10 +60,10 @@ export function useTorrentKeyboard({
         batchAction((h) => qbtClient.decreasePriority(h), t("Priority Down"));
       } else if (key === "ArrowDown") {
         e.preventDefault();
-        setFocusedIndex((i) => Math.min(i + 1, rows.length - 1));
+        setFocusedIndex(Math.min(focusedIndex + 1, rows.length - 1));
       } else if (key === "ArrowUp") {
         e.preventDefault();
-        setFocusedIndex((i) => Math.max(i - 1, 0));
+        setFocusedIndex(Math.max(focusedIndex - 1, 0));
       } else if (key === " " && focusedIndex >= 0) {
         e.preventDefault();
         const row = rows[focusedIndex];

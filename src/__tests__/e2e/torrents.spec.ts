@@ -187,7 +187,7 @@ test("marquee can start on a row (drag threshold), release click is swallowed", 
   // marquee selection must support starting on a row: after the press, moving
   // past the threshold turns into a marquee; the click generated on release
   // must not trigger row selection / the detail panel
-  const firstRow = page.locator("tbody tr[data-row-idx]").first();
+  const firstRow = page.locator("tbody tr[data-row-hash]").first();
   const box = (await firstRow.boundingBox()) as { x: number; y: number; width: number };
 
   await page.mouse.move(box.x + box.width * 0.5, box.y + 4);

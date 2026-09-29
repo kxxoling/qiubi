@@ -120,7 +120,7 @@ function TorrentRowImpl({
       onAction={deps.onCtxAction}
       renderRow={
         <TableRow
-          data-row-idx={idx}
+          data-row-hash={row.original.hash}
           className={`cursor-pointer transition-colors ${isSelected ? "bg-primary/10" : ""} ${
             isFocused ? "ring-1 ring-primary/50 bg-primary/5" : ""
           }`}
