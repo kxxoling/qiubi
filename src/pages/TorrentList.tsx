@@ -98,7 +98,12 @@ export function TorrentList() {
 
   // Sorting lives in the ui store so it survives reloads (useState would
   // reset it on every mount)
-  const [focusedIndex, setFocusedIndex] = useState(-1);
+  // Keyboard/context-menu focus follows the torrent's identity, not its row
+  // position: rows reindex on delete/filter/sort, and an index-keyed focus
+  // would silently land on whichever torrent slid into that slot (the same
+  // pitfall selection escaped via getRowId). The row index is derived below,
+  // where rows exist.
+  const [focusedHash, setFocusedHash] = useState<string | null>(null);
 
   /** Patch URL filter params (replace, no history entries) */
   const setUrlFilter = useCallback(
@@ -221,6 +226,14 @@ export function TorrentList() {
   });
 
   const rows = table.getRowModel().rows;
+  // -1 once the focused torrent leaves the list (deleted or filtered out) —
+  // no row inherits the focus ring
+  const focusedIndex =
+    focusedHash == null ? -1 : rows.findIndex((r) => r.original.hash === focusedHash);
+  const setFocusedIndex = useCallback(
+    (i: number) => setFocusedHash(i >= 0 ? (rows[i]?.original.hash ?? null) : null),
+    [rows],
+  );
   const selectedRows = table.getFilteredSelectedRowModel().rows;
   const selectedHashes = selectedRows.map((r) => r.original.hash);
 
