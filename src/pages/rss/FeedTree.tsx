@@ -79,6 +79,9 @@ export function FeedTree({
               <ContextMenuTrigger
                 render={
                   <div
+                    role="treeitem"
+                    tabIndex={0}
+                    aria-selected={selectedFeed === path}
                     className={cn(
                       "group flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-1.5 text-[13px] transition-colors",
                       selectedFeed === path
