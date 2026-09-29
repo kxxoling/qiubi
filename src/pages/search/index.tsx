@@ -86,6 +86,32 @@ export function SearchPage() {
   // at the right end of the recent-searches row while a search is active
   const resultCount = activeId !== null ? (status?.[0]?.total ?? allResults.length) : null;
 
+  // The incremental poll stops the moment status leaves "Running", so a
+  // search that finishes on its own would leave its tail unfetched. Drain
+  // the remainder once.
+  useEffect(() => {
+    if (activeId === null || status === undefined || isRunning) return;
+    const total = status[0]?.total ?? 0;
+    if (offsetRef.current >= total) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        // 500 per page × 50 pages covers any realistic search
+        for (let page = 0; page < 50 && !cancelled && offsetRef.current < total; page++) {
+          const res = await qbtClient.getSearchResults(activeId, 500, offsetRef.current);
+          if (res.results.length === 0) break;
+          setAllResults((prev) => [...prev, ...res.results]);
+          offsetRef.current += res.results.length;
+        }
+      } catch {
+        // Network hiccup: keep whatever was fetched
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeId, status, isRunning]);
+
   const startSearch = useCallback(
     async (patternOverride?: string) => {
       const p = (patternOverride ?? pattern).trim();
