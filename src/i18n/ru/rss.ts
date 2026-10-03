@@ -36,4 +36,5 @@ export default {
   "Leave empty to apply to all feeds": "Пусто = применить ко всем подпискам",
   "RSS is disabled on the server — enable it in Settings → RSS":
     "RSS отключён на сервере — включите в Настройки → RSS",
+  "Copy Feed URL": "Копировать ссылку на ленту",
 } satisfies Dictionary;

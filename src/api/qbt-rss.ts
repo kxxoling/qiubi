@@ -46,6 +46,19 @@ export class QbtRssApi extends QbtLibraryApi {
     });
   }
 
+  /** Rename a feed/folder by moving it under the same parent with a new name
+   *  (qBT has no dedicated rename or URL-edit endpoint — moveItem is it) */
+  async moveRssItem(itemPath: string, destPath: string): Promise<void> {
+    const body = new URLSearchParams();
+    body.set("itemPath", itemPath);
+    body.set("destPath", destPath);
+    await this.request("/rss/moveItem", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body,
+    });
+  }
+
   async getRssItems(withData?: boolean): Promise<Record<string, RssFeed>> {
     const qs = withData ? "?withData=true" : "";
     return this.request(`/rss/items${qs}`);

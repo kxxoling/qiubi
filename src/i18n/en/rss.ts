@@ -36,4 +36,5 @@ export default {
   "Leave empty to apply to all feeds": "Leave empty to apply to all feeds",
   "RSS is disabled on the server — enable it in Settings → RSS":
     "RSS is disabled on the server — enable it in Settings → RSS",
+  "Copy Feed URL": "Copy Feed URL",
 } satisfies Dictionary;

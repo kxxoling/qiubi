@@ -36,4 +36,5 @@ export default {
   "Leave empty to apply to all feeds": "留空 = 应用于所有订阅",
   "RSS is disabled on the server — enable it in Settings → RSS":
     "RSS 功能已在服务端关闭，请到 设置 → RSS 中开启",
+  "Copy Feed URL": "复制 RSS 源地址",
 } satisfies Dictionary;

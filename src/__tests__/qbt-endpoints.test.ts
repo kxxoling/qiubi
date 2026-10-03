@@ -223,6 +223,13 @@ const CASES: Case[] = [
     params: { path: "TechBlog" },
   },
   {
+    name: "moveRssItem",
+    call: (c) => c.moveRssItem("TechBlog", "folder/Renamed"),
+    path: "/rss/moveItem",
+    method: "POST",
+    params: { itemPath: "TechBlog", destPath: "folder/Renamed" },
+  },
+  {
     name: "getRssItems (withData)",
     call: (c) => c.getRssItems(true),
     path: "/rss/items?withData=true",

@@ -36,4 +36,5 @@ export default {
   "Leave empty to apply to all feeds": "空欄ですべてのフィードに適用",
   "RSS is disabled on the server — enable it in Settings → RSS":
     "サーバーで RSS が無効です — 設定 → RSS で有効にしてください",
+  "Copy Feed URL": "フィードURLをコピー",
 } satisfies Dictionary;
