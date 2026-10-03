@@ -92,4 +92,13 @@ describe("QbtClient", () => {
     // qBT only accepts POST; a GET 405s and never destroys the session
     expect(options.method).toBe("POST");
   });
+
+  test("network failures surface the address that was tried", async () => {
+    // Browsers reject with an opaque TypeError "Failed to fetch" for refused
+    // connections, DNS failures and timeouts alike — the client must replace
+    // it with a message naming the base URL
+    fetchSpy.mockRejectedValue(new TypeError("Failed to fetch"));
+
+    await expect(client.getAppVersion()).rejects.toThrow("http://localhost:8080");
+  });
 });

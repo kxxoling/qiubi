@@ -85,4 +85,6 @@ export default {
   "No results found": "결과 없음",
   "Refresh timed out": "새로 고침 시간 초과",
   "Refresh failed": "새로 고침 실패",
+  "Cannot reach qBittorrent at {url} — check that it is running and the address is correct":
+    "{url}의 qBittorrent에 연결할 수 없습니다——서버가 실행 중이고 주소가 올바른지 확인하세요",
 } satisfies Dictionary;

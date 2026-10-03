@@ -85,4 +85,6 @@ export default {
   "No results found": "Nenhum resultado",
   "Refresh timed out": "Tempo de atualização esgotado",
   "Refresh failed": "Falha na atualização",
+  "Cannot reach qBittorrent at {url} — check that it is running and the address is correct":
+    "Não foi possível conectar ao qBittorrent em {url} — verifique se ele está em execução e o endereço está correto",
 } satisfies Dictionary;

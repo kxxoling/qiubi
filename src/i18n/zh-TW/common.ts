@@ -85,4 +85,6 @@ export default {
   "No results found": "未找到結果",
   "Refresh timed out": "重新整理逾時，請稍後查看",
   "Refresh failed": "重新整理失敗",
+  "Cannot reach qBittorrent at {url} — check that it is running and the address is correct":
+    "無法連線 {url} 的 qBittorrent——請確認服務已啟動且地址正確",
 } satisfies Dictionary;

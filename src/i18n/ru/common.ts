@@ -85,4 +85,6 @@ export default {
   "No results found": "Ничего не найдено",
   "Refresh timed out": "Время обновления истекло",
   "Refresh failed": "Не удалось обновить",
+  "Cannot reach qBittorrent at {url} — check that it is running and the address is correct":
+    "Не удалось подключиться к qBittorrent ({url}) — проверьте, что он запущен и адрес указан верно",
 } satisfies Dictionary;

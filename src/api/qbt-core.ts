@@ -13,6 +13,7 @@
  *   localStorage.removeItem("qbt-debug")
  */
 
+import i18n from "@/i18n";
 import { appendErrorLog } from "@/lib/errorLog";
 import type { AuthLoginParams } from "@/types/qbt";
 
@@ -143,7 +144,17 @@ export class QbtCore {
         `✗ ${method} ${url} network error (backend unreachable or proxy misconfigured):`,
         e,
       );
-      throw e;
+      // The browser collapses every network-level failure into an opaque
+      // TypeError ("Failed to fetch") — name the address that was tried so
+      // the message surfaced in toasts is actionable
+      throw new Error(
+        i18n.t(
+          "Cannot reach qBittorrent at {url} — check that it is running and the address is correct",
+          {
+            url: this.baseUrl || window.location.origin,
+          },
+        ),
+      );
     }
     const elapsed = Math.round(performance.now() - startedAt);
 

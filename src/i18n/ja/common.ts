@@ -85,4 +85,6 @@ export default {
   "No results found": "結果が見つかりません",
   "Refresh timed out": "更新がタイムアウトしました",
   "Refresh failed": "更新に失敗しました",
+  "Cannot reach qBittorrent at {url} — check that it is running and the address is correct":
+    "{url} の qBittorrent に接続できません——サーバーが起動していてアドレスが正しいか確認してください",
 } satisfies Dictionary;
