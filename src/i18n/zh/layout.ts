@@ -58,4 +58,14 @@ export default {
     "演示模式：数据为浏览器内模拟，操作不会影响任何真实服务器",
   "Something went wrong": "页面出错了",
   "Back to home": "返回首页",
+  "Exit qBittorrent": "退出 qBittorrent",
+  "Exit qBittorrent confirm": "关闭 qBittorrent 服务？在重新启动之前，所有传输都会停止。",
+  "Restart qBittorrent": "重启 qBittorrent",
+  "Restart qBittorrent confirm":
+    "qBittorrent 将被关闭，qiubi 会等待它重新上线。自动恢复需要进程管理器（systemd、Docker 重启策略、启动脚本）托管；否则将保持关闭，直到手动启动。",
+  "qBittorrent is shutting down": "qBittorrent 正在关闭",
+  "Waiting for qBittorrent to come back…": "正在等待 qBittorrent 重新上线…",
+  "qBittorrent is back": "qBittorrent 已恢复",
+  "qBittorrent did not come back":
+    "qBittorrent 未恢复——如果它不受进程管理器（systemd、Docker 等）托管，请手动启动",
 } satisfies Dictionary;
