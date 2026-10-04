@@ -91,13 +91,14 @@ export function BasicFields({
           <Link2 className="size-4 text-muted-foreground" />
           {t("Links")}
         </label>
+        {/* field-sizing-content grows the box with its content: cap it so
+            pasting several long magnets can't blow up the dialog */}
         <Textarea
           id="add-urls"
           value={f.urls}
           onChange={(e) => set("urls", e.target.value)}
           placeholder={"magnet:?xt=urn:btih:…\nhttps://example.com/file.torrent"}
-          rows={4}
-          className="resize-none font-mono text-xs"
+          className="max-h-40 overflow-y-auto resize-none font-mono text-xs"
         />
       </div>
 
