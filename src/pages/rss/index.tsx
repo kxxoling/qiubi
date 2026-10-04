@@ -338,24 +338,32 @@ export function RssPage() {
           <DialogHeader>
             <DialogTitle>{t("Add Feed")}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3">
-            <div className="space-y-1.5">
-              <div className="text-xs text-muted-foreground">{t("Feed URL")}</div>
-              <Input
-                value={feedUrl}
-                onChange={(e) => setFeedUrl(e.target.value)}
-                placeholder="https://example.com/rss.xml"
-              />
+          {/* form wrapper: Enter in the URL field saves */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleAddFeed();
+            }}
+          >
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <div className="text-xs text-muted-foreground">{t("Feed URL")}</div>
+                <Input
+                  value={feedUrl}
+                  onChange={(e) => setFeedUrl(e.target.value)}
+                  placeholder="https://example.com/rss.xml"
+                />
+              </div>
             </div>
-          </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => setAddDialog(false)}>
-              {t("Cancel")}
-            </Button>
-            <Button onClick={handleAddFeed} disabled={!feedUrl.trim()}>
-              {t("Save")}
-            </Button>
-          </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={() => setAddDialog(false)}>
+                {t("Cancel")}
+              </Button>
+              <Button type="submit" disabled={!feedUrl.trim()}>
+                {t("Save")}
+              </Button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
 
@@ -365,24 +373,34 @@ export function RssPage() {
           <DialogHeader>
             <DialogTitle>{t("Rename")}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3">
-            <div className="space-y-1.5">
-              <div className="text-xs text-muted-foreground">{t("Name")}</div>
-              <Input
-                value={renameTarget?.name ?? ""}
-                onChange={(e) => setRenameTarget((h) => (h ? { ...h, name: e.target.value } : h))}
-                autoFocus
-              />
+          {/* form wrapper: Enter in the name field saves */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleRenameFeed();
+            }}
+          >
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <div className="text-xs text-muted-foreground">{t("Name")}</div>
+                <Input
+                  value={renameTarget?.name ?? ""}
+                  onChange={(e) =>
+                    setRenameTarget((h) => (h ? { ...h, name: e.target.value } : h))
+                  }
+                  autoFocus
+                />
+              </div>
             </div>
-          </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => setRenameTarget(null)}>
-              {t("Cancel")}
-            </Button>
-            <Button onClick={handleRenameFeed} disabled={!renameTarget?.name.trim()}>
-              {t("Save")}
-            </Button>
-          </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={() => setRenameTarget(null)}>
+                {t("Cancel")}
+              </Button>
+              <Button type="submit" disabled={!renameTarget?.name.trim()}>
+                {t("Save")}
+              </Button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
 
