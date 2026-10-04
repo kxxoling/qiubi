@@ -45,14 +45,20 @@ test.beforeEach(async ({ page }) => {
   await page.goto("/#/rss");
 });
 
+/** The feed's tree row — the path key is the displayed name now, and the
+ *  same string also appears in the article-list header, so locators must be
+ *  scoped to the tree */
+const feedRow = (page: import("@playwright/test").Page) =>
+  page.locator('[role="treeitem"]').filter({ hasText: "TechBlog" });
+
 test("displays RSS feed tree with unread badge", async ({ page }) => {
-  await expect(page.getByText("Tech Blog")).toBeVisible();
+  await expect(feedRow(page)).toBeVisible();
   // 1 unread → total-count badge on the toolbar
   await expect(page.locator("[data-slot=badge]", { hasText: "1" }).first()).toBeVisible();
 });
 
 test("clicking feed shows articles", async ({ page }) => {
-  await page.getByText("Tech Blog").click();
+  await feedRow(page).click();
   await expect(page.getByText("New Release v2.0")).toBeVisible();
   await expect(page.getByText("Bug Fix v1.9")).toBeVisible();
 });
@@ -64,7 +70,7 @@ test("clicking an article opens the add dialog with article context", async ({ p
     route.fulfill({ status: 200, body: "Ok." });
   });
 
-  await page.getByText("Tech Blog").click();
+  await feedRow(page).click();
   // Clicking the row now opens the add-torrent dialog (nothing added yet)
   await page.getByText("New Release v2.0").click();
   const dialog = page.getByRole("dialog");
@@ -84,4 +90,35 @@ test("add feed dialog opens", async ({ page }) => {
   await page.getByRole("button", { name: /Add Feed/i }).click();
   await expect(page.getByRole("heading", { name: /Add Feed/i })).toBeVisible();
   await expect(page.getByPlaceholder(/https?:\/\//i)).toBeVisible();
+});
+
+test("rename applies to the tree and saves with Enter", async ({ page }) => {
+  let renamed = false;
+  let moveBody = "";
+  await page.route("**/api/v2/rss/moveItem", (route) => {
+    renamed = true;
+    moveBody = route.request().postData() ?? "";
+    // "null" is safely consumable JSON — an empty body would make the
+    // client's response.json() throw
+    return route.fulfill({ status: 200, contentType: "application/json", body: "null" });
+  });
+  // After the rename lands, the feed's path key changes; its RSS-content
+  // `title` deliberately stays "Tech Blog" — the tree must show the new path
+  await page.route("**/api/v2/rss/items*", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(renamed ? { "Renamed Feed": mockFeeds.TechBlog } : mockFeeds),
+    }),
+  );
+
+  await feedRow(page).click({ button: "right" });
+  await page.getByRole("menuitem", { name: "Rename" }).click();
+  const input = page.locator('[data-slot="dialog-content"] input');
+  await input.fill("Renamed Feed");
+  await input.press("Enter");
+
+  await expect(page.getByText("Renamed Feed").first()).toBeVisible();
+  await expect.poll(() => moveBody).toContain("itemPath=TechBlog");
+  await expect.poll(() => moveBody).toContain("destPath=Renamed+Feed");
 });

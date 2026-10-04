@@ -36,4 +36,5 @@ export default {
   "Leave empty to apply to all feeds": "Vacío para aplicar a todos los canales",
   "RSS is disabled on the server — enable it in Settings → RSS":
     "RSS está desactivado en el servidor — actívalo en Ajustes → RSS",
+  "Copy Feed URL": "Copiar URL del canal",
 } satisfies Dictionary;
