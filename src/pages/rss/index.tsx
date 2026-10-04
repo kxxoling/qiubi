@@ -163,10 +163,20 @@ export function RssPage() {
   };
 
   /** Click/context-menu "Download": open the global add-torrent dialog with
-   *  the article's context above the fields (nothing is added until confirmed) */
+   *  the article's context above the fields (nothing is added until confirmed).
+   *  Clicking counts as reading — the article is marked read right away (the
+   *  dialog can still be cancelled; unmarking would be more confusing). */
   const downloadArticle = (article: RssArticle) => {
     const link = article.torrentURL || article.link;
     const desc = article.description?.replace(/<[^>]*>/g, "").trim();
+    if (selectedFeed && !article.isRead) {
+      qbtClient
+        .markRssAsRead(selectedFeed, article.id)
+        .then(() => qc.invalidateQueries({ queryKey: ["rss-feeds"] }))
+        .catch(() => {
+          // non-fatal: the list just keeps the unread badge until the next poll
+        });
+    }
     openAddTorrentDialog({
       urls: link,
       header: (
