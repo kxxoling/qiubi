@@ -59,3 +59,51 @@ test("finished search drains all results", async ({ page }) => {
   // The drain pass asked for the tail beyond the incremental polls
   expect(offsets).toContain(2);
 });
+
+test("results survive navigating away and back", async ({ page }) => {
+  const items = [1, 2].map((i) => ({
+    descrLink: "",
+    fileName: `kept-${i}.torrent`,
+    fileSize: 1024,
+    fileUrl: `magnet:?xt=urn:btih:000000000000000000000000000000000000000${i}`,
+    nbLeechers: 0,
+    nbSeeders: 1,
+    siteUrl: "https://site.example",
+  }));
+  await page.route("**/api/v2/search/status*", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify([{ id: 7, status: "Stopped", total: items.length }]),
+    }),
+  );
+  await page.route("**/api/v2/search/results*", (route) => {
+    const url = new URL(route.request().url());
+    const offset = Number(url.searchParams.get("offset") ?? 0);
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        results: items.slice(offset, offset + 1),
+        status: "Stopped",
+        total: items.length,
+      }),
+    });
+  });
+
+  await page.getByPlaceholder(/Search torrents/i).fill("debian");
+  await page.getByRole("button", { name: "Search", exact: true }).click();
+  await page.mouse.move(0, 0);
+  for (const item of items) {
+    await expect(page.getByText(item.fileName)).toBeVisible();
+  }
+
+  // Leave via the app's own tab nav (SPA navigation — a full page load would
+  // legitimately reset the in-memory store), then come back
+  await page.getByRole("link", { name: "Torrents", exact: true }).click();
+  await expect(page.getByText("kept-1.torrent")).toHaveCount(0);
+  await page.getByRole("link", { name: "Search", exact: true }).click();
+  for (const item of items) {
+    await expect(page.getByText(item.fileName)).toBeVisible();
+  }
+});

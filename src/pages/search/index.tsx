@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearch } from "@tanstack/react-router";
 import { Puzzle } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { qbtClient } from "@/api/qbt";
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { pollWithBackoff } from "@/hooks/useMainDataSync";
 import { useSearchHistory } from "@/hooks/useSearchHistory";
+import { useSearchStore } from "@/stores/search";
 import type { SearchResult } from "@/types/qbt";
 import { ResultsTable } from "./ResultsTable";
 import { SearchForm } from "./SearchForm";
@@ -26,14 +27,21 @@ export function SearchPage() {
   const qc = useQueryClient();
   // Command palette navigation carries ?q= — prefill and auto-search
   const urlSearch = useSearch({ strict: false }) as { q?: string; category?: string };
-  const [pattern, setPattern] = useState(urlSearch.q ?? "");
-  const [category, setCategory] = useState(urlSearch.category ?? "all");
-  // Official WebUI default: first option "Only enabled"
-  const [pluginFilter, setPluginFilter] = useState("enabled");
-  const [autoStarted, setAutoStarted] = useState(false);
-  const [activeId, setActiveId] = useState<number | null>(null);
-  const [allResults, setAllResults] = useState<SearchResult[]>([]);
-  const offsetRef = useRef(0);
+  // Page state lives in a module-level store: the search job and its results
+  // survive navigating away and back (component state reset on every mount)
+  const {
+    pattern,
+    category,
+    pluginFilter,
+    activeId,
+    results: allResults,
+    setPattern,
+    setCategory,
+    setPluginFilter,
+    beginSearch,
+    appendResults,
+    setAutoStartedFor,
+  } = useSearchStore();
 
   const {
     entries: recent,
@@ -51,11 +59,12 @@ export function SearchPage() {
   });
 
   // Drop a stale selection: plugin got disabled or uninstalled meanwhile
+  // (store actions are stable references; listed for the lint rule)
   useEffect(() => {
     if (!plugins || pluginFilter === "enabled" || pluginFilter === "all") return;
     const enabled = plugins.some((p) => p.enabled && p.name === pluginFilter);
     if (!enabled) setPluginFilter("enabled");
-  }, [plugins, pluginFilter]);
+  }, [plugins, pluginFilter, setPluginFilter]);
 
   // Search status polling
   const { data: status } = useQuery({
@@ -70,11 +79,8 @@ export function SearchPage() {
     queryKey: ["search-results", activeId],
     queryFn: async () => {
       if (!activeId) return null;
-      const res = await qbtClient.getSearchResults(activeId, 50, offsetRef.current);
-      if (res.results.length > 0) {
-        setAllResults((prev) => [...prev, ...res.results]);
-        offsetRef.current += res.results.length;
-      }
+      const res = await qbtClient.getSearchResults(activeId, 50, useSearchStore.getState().offset);
+      appendResults(res.results);
       return res;
     },
     enabled: activeId !== null && status?.[0]?.status === "Running",
@@ -92,16 +98,23 @@ export function SearchPage() {
   useEffect(() => {
     if (activeId === null || status === undefined || isRunning) return;
     const total = status[0]?.total ?? 0;
-    if (offsetRef.current >= total) return;
+    if (useSearchStore.getState().offset >= total) return;
     let cancelled = false;
     (async () => {
       try {
         // 500 per page × 50 pages covers any realistic search
-        for (let page = 0; page < 50 && !cancelled && offsetRef.current < total; page++) {
-          const res = await qbtClient.getSearchResults(activeId, 500, offsetRef.current);
+        for (
+          let page = 0;
+          page < 50 && !cancelled && useSearchStore.getState().offset < total;
+          page++
+        ) {
+          const res = await qbtClient.getSearchResults(
+            activeId,
+            500,
+            useSearchStore.getState().offset,
+          );
           if (res.results.length === 0) break;
-          setAllResults((prev) => [...prev, ...res.results]);
-          offsetRef.current += res.results.length;
+          appendResults(res.results);
         }
       } catch {
         // Network hiccup: keep whatever was fetched
@@ -110,26 +123,25 @@ export function SearchPage() {
     return () => {
       cancelled = true;
     };
-  }, [activeId, status, isRunning]);
+  }, [activeId, status, isRunning, appendResults]);
 
   const startSearch = useCallback(
     async (patternOverride?: string) => {
-      const p = (patternOverride ?? pattern).trim();
+      const p = (patternOverride ?? useSearchStore.getState().pattern).trim();
       if (!p) return;
       try {
         const { id } = await qbtClient.startSearch(p, pluginFilter, category);
         // The form no longer has a clear button: replacing means deleting the
         // previous job server-side instead of leaking it
-        if (activeId !== null) qbtClient.deleteSearch(activeId).catch(() => {});
+        const prev = useSearchStore.getState().activeId;
+        if (prev !== null) qbtClient.deleteSearch(prev).catch(() => {});
         addRecent(p);
-        setActiveId(id);
-        setAllResults([]);
-        offsetRef.current = 0;
+        beginSearch(id);
       } catch (e) {
         toast.error(e instanceof Error ? e.message : String(e));
       }
     },
-    [pattern, category, pluginFilter, activeId, addRecent],
+    [pluginFilter, category, beginSearch, addRecent],
   );
 
   // Re-run a recent search from a history chip
@@ -138,31 +150,32 @@ export function SearchPage() {
       setPattern(term);
       startSearch(term);
     },
-    [startSearch],
+    [startSearch, setPattern],
   );
 
-  // Auto-start one search when arriving via a ?q= navigation
+  // Auto-start one search when arriving via a ?q= navigation (once per q —
+  // the store survives remounts, so the guard must too)
   useEffect(() => {
-    if (urlSearch.q && !autoStarted && pattern === urlSearch.q) {
-      setAutoStarted(true);
-      startSearch();
-    }
-  }, [urlSearch.q, autoStarted, pattern, startSearch]);
+    const q = urlSearch.q;
+    if (!q || useSearchStore.getState().autoStartedFor === q) return;
+    setAutoStartedFor(q);
+    setPattern(q);
+    if (urlSearch.category) setCategory(urlSearch.category);
+    startSearch(q);
+  }, [urlSearch.q, urlSearch.category, startSearch, setAutoStartedFor, setPattern, setCategory]);
 
   const stopSearch = useCallback(async () => {
     if (!activeId) return;
     try {
       await qbtClient.stopSearch(activeId);
       // Fetch remaining results
-      const res = await qbtClient.getSearchResults(activeId, 500, offsetRef.current);
-      if (res.results.length > 0) {
-        setAllResults((prev) => [...prev, ...res.results]);
-      }
+      const res = await qbtClient.getSearchResults(activeId, 500, useSearchStore.getState().offset);
+      appendResults(res.results);
       toast.success(t("Stopped"));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e));
     }
-  }, [activeId, t]);
+  }, [activeId, appendResults, t]);
 
   const downloadResult = async (r: SearchResult) => {
     try {
