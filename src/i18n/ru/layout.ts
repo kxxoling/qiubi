@@ -58,4 +58,15 @@ export default {
     "Демо-режим: данные моделируются в браузере, действия не затрагивают реальный сервер",
   "Something went wrong": "Что-то пошло не так",
   "Back to home": "На главную",
+  "Exit qBittorrent": "Выйти из qBittorrent",
+  "Exit qBittorrent confirm":
+    "Выключить qBittorrent? Все загрузки остановятся, пока он не будет запущен снова.",
+  "Restart qBittorrent": "Перезапустить qBittorrent",
+  "Restart qBittorrent confirm":
+    "qBittorrent будет выключен, и qiubi дождётся его возвращения. Автоматическое восстановление возможно только под супервизором процессов (systemd, политика перезапуска Docker, скрипт запуска); иначе он останется выключенным до ручного запуска.",
+  "qBittorrent is shutting down": "qBittorrent выключается",
+  "Waiting for qBittorrent to come back…": "Ожидание возвращения qBittorrent…",
+  "qBittorrent is back": "qBittorrent снова доступен",
+  "qBittorrent did not come back":
+    "qBittorrent не вернулся — если он не запущен супервизором (systemd, Docker, …), запустите его вручную",
 } satisfies Dictionary;

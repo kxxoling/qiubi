@@ -58,4 +58,15 @@ export default {
     "デモモード: データはブラウザー内でシミュレートされており、操作は実際のサーバーに影響しません",
   "Something went wrong": "問題が発生しました",
   "Back to home": "ホームに戻る",
+  "Exit qBittorrent": "qBittorrent を終了",
+  "Exit qBittorrent confirm":
+    "qBittorrent を終了しますか？再起動するまですべての転送が停止します。",
+  "Restart qBittorrent": "qBittorrent を再起動",
+  "Restart qBittorrent confirm":
+    "qBittorrent を終了し、復帰を待ちます。自動復帰にはプロセス管理ツール（systemd、Docker の再起動ポリシー、起動スクリプト）による管理が必要です。そうでない場合は手動で起動するまで停止したままになります。",
+  "qBittorrent is shutting down": "qBittorrent を終了しています",
+  "Waiting for qBittorrent to come back…": "qBittorrent の復帰を待っています…",
+  "qBittorrent is back": "qBittorrent が復帰しました",
+  "qBittorrent did not come back":
+    "qBittorrent が復帰しません——systemd や Docker などのプロセス管理下にない場合は手動で起動してください",
 } satisfies Dictionary;

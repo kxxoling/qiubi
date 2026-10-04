@@ -58,4 +58,15 @@ export default {
     "데모 모드: 데이터는 브라우저에서 시뮬레이션되며, 조작은 실제 서버에 영향을 주지 않습니다",
   "Something went wrong": "문제가 발생했습니다",
   "Back to home": "홈으로 돌아가기",
+  "Exit qBittorrent": "qBittorrent 종료",
+  "Exit qBittorrent confirm":
+    "qBittorrent를 종료할까요? 다시 시작하기 전까지 모든 전송이 중단됩니다.",
+  "Restart qBittorrent": "qBittorrent 재시작",
+  "Restart qBittorrent confirm":
+    "qBittorrent를 종료하고 복귀를 기다립니다. 자동 복귀에는 프로세스 관리자(systemd, Docker 재시작 정책, 시작 스크립트)의 관리가 필요하며, 그렇지 않으면 수동으로 시작할 때까지 꺼져 있습니다.",
+  "qBittorrent is shutting down": "qBittorrent를 종료하는 중입니다",
+  "Waiting for qBittorrent to come back…": "qBittorrent의 복귀를 기다리는 중…",
+  "qBittorrent is back": "qBittorrent가 복귀했습니다",
+  "qBittorrent did not come back":
+    "qBittorrent가 복귀하지 않았습니다——프로세스 관리자(systemd, Docker 등)로 관리되지 않는다면 직접 시작하세요",
 } satisfies Dictionary;

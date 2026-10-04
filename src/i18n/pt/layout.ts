@@ -58,4 +58,15 @@ export default {
     "Modo demo: os dados são simulados no navegador; as ações não afetam nenhum servidor real",
   "Something went wrong": "Algo deu errado",
   "Back to home": "Voltar ao início",
+  "Exit qBittorrent": "Sair do qBittorrent",
+  "Exit qBittorrent confirm":
+    "Desligar o qBittorrent? Todas as transferências param até ele ser iniciado novamente.",
+  "Restart qBittorrent": "Reiniciar o qBittorrent",
+  "Restart qBittorrent confirm":
+    "O qBittorrent será desligado e o qiubi aguardará seu retorno. A recuperação automática exige um supervisor de processos (systemd, política de reinício do Docker, script de inicialização); caso contrário, ele permanecerá desligado até ser iniciado manualmente.",
+  "qBittorrent is shutting down": "O qBittorrent está a desligar",
+  "Waiting for qBittorrent to come back…": "A aguardar o retorno do qBittorrent…",
+  "qBittorrent is back": "O qBittorrent voltou",
+  "qBittorrent did not come back":
+    "O qBittorrent não voltou — se não for gerido por um supervisor (systemd, Docker, …), inicie-o manualmente",
 } satisfies Dictionary;

@@ -6,7 +6,7 @@
  */
 
 import { useNavigate } from "@tanstack/react-router";
-import { Info, LogOut, Plus } from "lucide-react";
+import { Info, LogOut, Plus, PowerOff, RotateCcw } from "lucide-react";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -14,6 +14,8 @@ import { qbtClient } from "@/api/qbt";
 import { AboutDialog } from "@/components/layout/AboutDialog";
 import { AppearanceMenu } from "@/components/layout/ThemeToggle";
 import { openAddTorrentDialog } from "@/components/torrent/AddTorrentDialog";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -116,6 +118,8 @@ export function MenuBar() {
   /** Currently open menu (id = File/Edit/...), only one open at a time */
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [aboutOpen, setAboutOpen] = useState(false);
+  const [exitOpen, setExitOpen] = useState(false);
+  const [restartOpen, setRestartOpen] = useState(false);
   const { theme, setTheme, colorTheme, setColorTheme } = useAppStore();
   const { sidebarVisible, statusBarVisible, toggleSidebar, toggleStatusBar } = useUiStore();
 
@@ -149,6 +153,42 @@ export function MenuBar() {
     navigate({ to: "/login" });
   };
 
+  const shutdownServer = async () => {
+    setExitOpen(false);
+    try {
+      await qbtClient.shutdown();
+      toast.success(t("qBittorrent is shutting down"));
+    } catch (e) {
+      logError("ui", e, "app/shutdown failed");
+      toast.error(t("Something went wrong"), {
+        description: e instanceof Error ? e.message : String(e),
+      });
+    }
+  };
+
+  const restartServer = async () => {
+    setRestartOpen(false);
+    const toastId = toast.loading(t("Waiting for qBittorrent to come back…"));
+    // The shutdown response may never arrive once the server starts closing
+    // sockets — the wait loop below is the real feedback
+    qbtClient.shutdown().catch(() => {});
+    const deadline = Date.now() + 60_000;
+    while (Date.now() < deadline) {
+      try {
+        // Any HTTP response — even a 403 from the now-dead session — means
+        // the server is listening again; going through qbtClient instead
+        // would fire the global auth-expiry redirect from this probe
+        await fetch(`${qbtClient.getBaseUrl()}/api/v2/app/version`, { cache: "no-store" });
+        toast.success(t("qBittorrent is back"), { id: toastId });
+        return;
+      } catch {
+        // still down
+      }
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+    toast.error(t("qBittorrent did not come back"), { id: toastId });
+  };
+
   return (
     <div className="flex h-9 shrink-0 items-center gap-0.5 border-b bg-card px-2">
       {/* File */}
@@ -161,6 +201,15 @@ export function MenuBar() {
         <DropdownMenuItem onClick={logout}>
           <LogOut />
           {t("Logout")}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem variant="destructive" onClick={() => setExitOpen(true)}>
+          <PowerOff />
+          {t("Exit qBittorrent")}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setRestartOpen(true)}>
+          <RotateCcw />
+          {t("Restart qBittorrent")}
         </DropdownMenuItem>
       </Menu>
 
@@ -235,6 +284,38 @@ export function MenuBar() {
         </DropdownMenuItem>
       </Menu>
       <AboutDialog open={aboutOpen} onOpenChange={setAboutOpen} />
+
+      <Dialog open={exitOpen} onOpenChange={setExitOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("Exit qBittorrent")}</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">{t("Exit qBittorrent confirm")}</p>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setExitOpen(false)}>
+              {t("Cancel")}
+            </Button>
+            <Button variant="destructive" onClick={shutdownServer}>
+              {t("Exit qBittorrent")}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={restartOpen} onOpenChange={setRestartOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("Restart qBittorrent")}</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">{t("Restart qBittorrent confirm")}</p>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setRestartOpen(false)}>
+              {t("Cancel")}
+            </Button>
+            <Button onClick={restartServer}>{t("Restart qBittorrent")}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Right end: single appearance menu (light/dark + color theme) */}
       <div className="ml-auto flex items-center gap-0.5">

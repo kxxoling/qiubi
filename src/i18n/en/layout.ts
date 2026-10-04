@@ -58,4 +58,15 @@ export default {
     "Demo mode: data is simulated in the browser, actions won't affect any real server",
   "Something went wrong": "Something went wrong",
   "Back to home": "Back to home",
+  "Exit qBittorrent": "Exit qBittorrent",
+  "Exit qBittorrent confirm":
+    "Shut down the qBittorrent service? All transfers stop until it is started again.",
+  "Restart qBittorrent": "Restart qBittorrent",
+  "Restart qBittorrent confirm":
+    "qBittorrent will be shut down and qiubi will wait for it to come back. Automatic recovery requires a process supervisor (systemd, Docker restart policy, launcher script); otherwise it stays off until started manually.",
+  "qBittorrent is shutting down": "qBittorrent is shutting down",
+  "Waiting for qBittorrent to come back…": "Waiting for qBittorrent to come back…",
+  "qBittorrent is back": "qBittorrent is back",
+  "qBittorrent did not come back":
+    "qBittorrent did not come back — if it is not managed by a supervisor (systemd, Docker, …), start it manually",
 } satisfies Dictionary;
