@@ -113,6 +113,10 @@ export function FeedTree({
                     )}
                   />
                 )}
+                {/* The tree shows the user-controlled name (the path segment):
+                    moveItem renames only the path, and the feed's `title` is
+                    RSS-content metadata — displaying it would make a rename
+                    look like a no-op */}
                 <span
                   className={cn(
                     "min-w-0 flex-1 truncate",
@@ -121,7 +125,7 @@ export function FeedTree({
                   )}
                   style={{ paddingLeft: depth > 0 ? 8 : 0 }}
                 >
-                  {feed.title || path.split("/").pop()}
+                  {path.split("/").pop()}
                 </span>
                 {unread > 0 && (
                   <Badge className="bg-primary/15 px-1 text-[9px] text-primary hover:bg-primary/15">

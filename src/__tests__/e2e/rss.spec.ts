@@ -45,14 +45,20 @@ test.beforeEach(async ({ page }) => {
   await page.goto("/#/rss");
 });
 
+/** The feed's tree row — the path key is the displayed name now, and the
+ *  same string also appears in the article-list header, so locators must be
+ *  scoped to the tree */
+const feedRow = (page: import("@playwright/test").Page) =>
+  page.locator('[role="treeitem"]').filter({ hasText: "TechBlog" });
+
 test("displays RSS feed tree with unread badge", async ({ page }) => {
-  await expect(page.getByText("Tech Blog")).toBeVisible();
+  await expect(feedRow(page)).toBeVisible();
   // 1 unread → total-count badge on the toolbar
   await expect(page.locator("[data-slot=badge]", { hasText: "1" }).first()).toBeVisible();
 });
 
 test("clicking feed shows articles", async ({ page }) => {
-  await page.getByText("Tech Blog").click();
+  await feedRow(page).click();
   await expect(page.getByText("New Release v2.0")).toBeVisible();
   await expect(page.getByText("Bug Fix v1.9")).toBeVisible();
 });
@@ -64,7 +70,7 @@ test("clicking an article opens the add dialog with article context", async ({ p
     route.fulfill({ status: 200, body: "Ok." });
   });
 
-  await page.getByText("Tech Blog").click();
+  await feedRow(page).click();
   // Clicking the row now opens the add-torrent dialog (nothing added yet)
   await page.getByText("New Release v2.0").click();
   const dialog = page.getByRole("dialog");
