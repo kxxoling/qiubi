@@ -23,6 +23,25 @@ import type { AppPreferences, RssArticle, RssFeed } from "@/types/qbt";
 import { ArticleList } from "./ArticleList";
 import { FeedTree, flattenFeeds } from "./FeedTree";
 
+/** Apply fn to the map that CONTAINS the feed/folder at `path` — used for
+ *  immediate cache updates once the server confirms a rename/delete, so the
+ *  tree never waits for the refetch round-trip (invalidate reconciles after) */
+function updateFeedTree(
+  items: Record<string, RssFeed>,
+  path: string,
+  fn: (node: Record<string, RssFeed>, name: string) => Record<string, RssFeed>,
+): Record<string, RssFeed> {
+  const walk = (node: Record<string, RssFeed>, segs: string[]): Record<string, RssFeed> => {
+    const [head, ...rest] = segs;
+    if (!head || !(head in node)) return node;
+    if (rest.length === 0) return fn(node, head);
+    const child = node[head];
+    if (!child.children) return node;
+    return { ...node, [head]: { ...child, children: walk(child.children, rest) } };
+  };
+  return walk(items, path.split("/"));
+}
+
 /**
  * RSS page — two-column layout (narrow feed tree | wide article list)
  *
@@ -89,6 +108,15 @@ export function RssPage() {
       toast.success(t("Deleted"));
       setDeleteTarget(null);
       if (selectedFeed === path) setSelectedFeed(null);
+      qc.setQueryData(["rss-feeds"], (prev: Record<string, RssFeed> | undefined) =>
+        prev
+          ? updateFeedTree(prev, path, (node, old) => {
+              const rest = { ...node };
+              delete rest[old];
+              return rest;
+            })
+          : prev,
+      );
       await qc.invalidateQueries({ queryKey: ["rss-feeds"] });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e));
@@ -111,6 +139,14 @@ export function RssPage() {
       await qbtClient.moveRssItem(renameTarget.path, dest);
       toast.success(t("Saved"));
       if (selectedFeed === renameTarget.path) setSelectedFeed(dest);
+      qc.setQueryData(["rss-feeds"], (prev: Record<string, RssFeed> | undefined) =>
+        prev
+          ? updateFeedTree(prev, renameTarget.path, (node, old) => {
+              const { [old]: feed, ...rest } = node;
+              return { ...rest, [name]: feed };
+            })
+          : prev,
+      );
       await qc.invalidateQueries({ queryKey: ["rss-feeds"] });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e));
@@ -385,9 +421,7 @@ export function RssPage() {
                 <div className="text-xs text-muted-foreground">{t("Name")}</div>
                 <Input
                   value={renameTarget?.name ?? ""}
-                  onChange={(e) =>
-                    setRenameTarget((h) => (h ? { ...h, name: e.target.value } : h))
-                  }
+                  onChange={(e) => setRenameTarget((h) => (h ? { ...h, name: e.target.value } : h))}
                   autoFocus
                 />
               </div>
