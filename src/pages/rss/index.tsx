@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { pollWithBackoff } from "@/hooks/useMainDataSync";
-import type { AppPreferences, RssArticle } from "@/types/qbt";
+import type { AppPreferences, RssArticle, RssFeed } from "@/types/qbt";
 import { ArticleList } from "./ArticleList";
 import { FeedTree, flattenFeeds } from "./FeedTree";
 
@@ -37,6 +37,8 @@ export function RssPage() {
   const [feedUrl, setFeedUrl] = useState("");
   const [selectedFeed, setSelectedFeed] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  /** Rename dialog target: feed path + editable display name (last path segment) */
+  const [renameTarget, setRenameTarget] = useState<{ path: string; name: string } | null>(null);
   const [_refreshingFeed, setRefreshingFeed] = useState<string | null>(null);
 
   const { data: feeds, isLoading } = useQuery({
@@ -90,6 +92,37 @@ export function RssPage() {
       await qc.invalidateQueries({ queryKey: ["rss-feeds"] });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e));
+    }
+  };
+
+  /** Rename = move the feed under the same parent with the new name (qBT's
+   *  moveItem is also its rename; the feed URL itself is not editable via API) */
+  const handleRenameFeed = async () => {
+    if (!renameTarget) return;
+    const name = renameTarget.name.trim();
+    if (!name) return;
+    const parent = renameTarget.path.includes("/")
+      ? renameTarget.path.slice(0, renameTarget.path.lastIndexOf("/"))
+      : "";
+    const dest = parent ? `${parent}/${name}` : name;
+    setRenameTarget(null);
+    if (dest === renameTarget.path) return;
+    try {
+      await qbtClient.moveRssItem(renameTarget.path, dest);
+      toast.success(t("Saved"));
+      if (selectedFeed === renameTarget.path) setSelectedFeed(dest);
+      await qc.invalidateQueries({ queryKey: ["rss-feeds"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    }
+  };
+
+  const copyFeedUrl = async (feed: RssFeed) => {
+    try {
+      await navigator.clipboard.writeText(feed.url);
+      toast.success(t("Copied"));
+    } catch {
+      toast.error(t("Copy failed"));
     }
   };
 
@@ -286,6 +319,8 @@ export function RssPage() {
           onRefreshOne={refreshOne}
           onDeleteRequest={setDeleteTarget}
           onMarkFeedRead={markFeedRead}
+          onRenameRequest={(path) => setRenameTarget({ path, name: path.split("/").pop() ?? path })}
+          onCopyUrl={copyFeedUrl}
         />
 
         {/* Right: article list (wide) */}
@@ -318,6 +353,33 @@ export function RssPage() {
               {t("Cancel")}
             </Button>
             <Button onClick={handleAddFeed} disabled={!feedUrl.trim()}>
+              {t("Save")}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Rename feed dialog */}
+      <Dialog open={!!renameTarget} onOpenChange={() => setRenameTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("Rename")}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <div className="text-xs text-muted-foreground">{t("Name")}</div>
+              <Input
+                value={renameTarget?.name ?? ""}
+                onChange={(e) => setRenameTarget((h) => (h ? { ...h, name: e.target.value } : h))}
+                autoFocus
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setRenameTarget(null)}>
+              {t("Cancel")}
+            </Button>
+            <Button onClick={handleRenameFeed} disabled={!renameTarget?.name.trim()}>
               {t("Save")}
             </Button>
           </div>

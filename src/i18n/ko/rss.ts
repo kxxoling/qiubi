@@ -36,4 +36,5 @@ export default {
   "Leave empty to apply to all feeds": "비워 두면 모든 피드에 적용",
   "RSS is disabled on the server — enable it in Settings → RSS":
     "서버에서 RSS가 비활성되어 있습니다 — 설정 → RSS에서 활성화하세요",
+  "Copy Feed URL": "피드 URL 복사",
 } satisfies Dictionary;

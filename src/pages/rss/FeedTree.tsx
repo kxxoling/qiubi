@@ -1,8 +1,10 @@
 import {
   CheckCheck,
+  Copy,
   FolderOpen,
   Loader2,
   MoreVertical,
+  Pencil,
   RefreshCw,
   Rss,
   Trash2,
@@ -53,6 +55,8 @@ interface FeedTreeProps {
   onRefreshOne: (path: string) => void;
   onDeleteRequest: (path: string) => void;
   onMarkFeedRead: (path: string) => Promise<void>;
+  onRenameRequest: (path: string) => void;
+  onCopyUrl: (feed: RssFeed) => void;
 }
 
 /** Left column: feed tree with desktop context menu and mobile ⋮ dropdown */
@@ -63,6 +67,8 @@ export function FeedTree({
   onRefreshOne,
   onDeleteRequest,
   onMarkFeedRead,
+  onRenameRequest,
+  onCopyUrl,
 }: FeedTreeProps) {
   const { t } = useTranslation();
 
@@ -142,6 +148,18 @@ export function FeedTree({
                         {t("Refresh")}
                       </DropdownMenuItem>
                     )}
+                    {!isFolder && (
+                      <DropdownMenuItem onClick={() => onRenameRequest(path)}>
+                        <Pencil className="mr-1 size-3.5" />
+                        {t("Rename")}
+                      </DropdownMenuItem>
+                    )}
+                    {!isFolder && (
+                      <DropdownMenuItem onClick={() => onCopyUrl(feed)}>
+                        <Copy className="mr-1 size-3.5" />
+                        {t("Copy Feed URL")}
+                      </DropdownMenuItem>
+                    )}
                     {!isFolder && unread > 0 && (
                       <DropdownMenuItem
                         onClick={async () => {
@@ -165,6 +183,18 @@ export function FeedTree({
                   <ContextMenuItem onClick={() => onRefreshOne(path)}>
                     <RefreshCw className="mr-2 size-4" />
                     {t("Refresh")}
+                  </ContextMenuItem>
+                )}
+                {!isFolder && (
+                  <ContextMenuItem onClick={() => onRenameRequest(path)}>
+                    <Pencil className="mr-2 size-4" />
+                    {t("Rename")}
+                  </ContextMenuItem>
+                )}
+                {!isFolder && (
+                  <ContextMenuItem onClick={() => onCopyUrl(feed)}>
+                    <Copy className="mr-2 size-4" />
+                    {t("Copy Feed URL")}
                   </ContextMenuItem>
                 )}
                 {!isFolder && unread > 0 && (
