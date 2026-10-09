@@ -37,4 +37,6 @@ export default {
   "RSS is disabled on the server — enable it in Settings → RSS":
     "RSS отключён на сервере — включите в Настройки → RSS",
   "Copy Feed URL": "Копировать ссылку на ленту",
+  "RSS hotkeys hint":
+    "j/k выбор статьи · Shift+J/K смена ленты · Enter скачать · r обновить · Shift+R обновить все",
 } satisfies Dictionary;

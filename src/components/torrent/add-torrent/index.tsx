@@ -48,11 +48,17 @@ export function AddTorrentDialog() {
   const { parsedTorrents, parseFiles, resetParsedTorrents } = useTorrentParse();
 
   const [headerSlot, setHeaderSlot] = useState<React.ReactNode>(null);
+  /** Opened with prefilled links (RSS article context): focus the confirm
+   *  button so Enter submits — the paste-by-hand flow keeps the default
+   *  focus on the links field */
+  const [prefilledOpen, setPrefilledOpen] = useState(false);
+  const submitRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     setOpenExternal = (init) => {
       if (init?.urls) setF((prev) => ({ ...prev, urls: init.urls as string }));
       setHeaderSlot(init?.header ?? null);
+      setPrefilledOpen(!!init?.urls);
       setOpen(true);
     };
     registerAddTorrentOpener(() => setOpen(true));
@@ -179,7 +185,10 @@ export function AddTorrentDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="gap-0 sm:max-w-md">
+      <DialogContent
+        className="gap-0 sm:max-w-md"
+        initialFocus={prefilledOpen ? submitRef : undefined}
+      >
         <DialogHeader className="border-b px-5 pb-3">
           <DialogTitle className="flex items-center gap-2 text-base">
             <Plus className="size-4 text-primary" />
@@ -187,43 +196,54 @@ export function AddTorrentDialog() {
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex max-h-[70vh] flex-col gap-0 overflow-y-auto px-5 py-4">
-          {/* Callers can inject context above the fields (e.g. RSS article) */}
-          {headerSlot}
-          <BasicFields
-            form={f}
-            set={set}
-            categories={categories}
-            tagsPlaceholder={allTags?.slice(0, 3).join(", ") || "tag1, tag2"}
-            savePathPlaceholder={(prefs?.save_path as string) || "/downloads"}
-            dragOver={dragOver}
-            setDragOver={setDragOver}
-            onAddFiles={addFiles}
-            fileInputRef={fileInputRef}
-            parsedTorrents={parsedTorrents}
-            skippedFiles={skippedFiles}
-            setSkippedFiles={setSkippedFiles}
-          />
-          <AdvancedFields
-            form={f}
-            set={set}
-            showAdvanced={showAdvanced}
-            onToggleAdvanced={() => setShowAdvanced(!showAdvanced)}
-          />
-        </div>
+        {/* form: Enter in any single-line field (or on the submit button)
+            confirms the download */}
+        <form
+          className="contents"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void handleSubmit();
+          }}
+        >
+          <div className="flex max-h-[70vh] flex-col gap-0 overflow-y-auto px-5 py-4">
+            {/* Callers can inject context above the fields (e.g. RSS article) */}
+            {headerSlot}
+            <BasicFields
+              form={f}
+              set={set}
+              categories={categories}
+              tagsPlaceholder={allTags?.slice(0, 3).join(", ") || "tag1, tag2"}
+              savePathPlaceholder={(prefs?.save_path as string) || "/downloads"}
+              dragOver={dragOver}
+              setDragOver={setDragOver}
+              onAddFiles={addFiles}
+              fileInputRef={fileInputRef}
+              parsedTorrents={parsedTorrents}
+              skippedFiles={skippedFiles}
+              setSkippedFiles={setSkippedFiles}
+            />
+            <AdvancedFields
+              form={f}
+              set={set}
+              showAdvanced={showAdvanced}
+              onToggleAdvanced={() => setShowAdvanced(!showAdvanced)}
+            />
+          </div>
 
-        {/* ── Footer buttons ── */}
-        <div className="flex shrink-0 items-center justify-end gap-2 border-t bg-muted/50 px-5 py-3">
-          <Button variant="outline" onClick={() => setOpen(false)}>
-            {t("Cancel")}
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={loading || (f.urls.trim() === "" && f.files.length === 0)}
-          >
-            {loading ? t("Connecting...") : t("Download")}
-          </Button>
-        </div>
+          {/* ── Footer buttons ── */}
+          <div className="flex shrink-0 items-center justify-end gap-2 border-t bg-muted/50 px-5 py-3">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              {t("Cancel")}
+            </Button>
+            <Button
+              ref={submitRef}
+              type="submit"
+              disabled={loading || (f.urls.trim() === "" && f.files.length === 0)}
+            >
+              {loading ? t("Connecting...") : t("Download")}
+            </Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

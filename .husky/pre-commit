@@ -1,2 +1,6 @@
+#!/bin/sh
+# Without set -e the exit status was the LAST command's — a lint failure
+# followed by passing tests let broken commits through to CI
+set -e
 bun run lint
 bun run test

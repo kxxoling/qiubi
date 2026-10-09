@@ -31,6 +31,12 @@ const mockFeeds = {
       },
     ],
   },
+  News: {
+    uid: "2",
+    url: "https://news.example.com/rss",
+    title: "News",
+    articles: [],
+  },
 };
 
 test.beforeEach(async ({ page }) => {
@@ -90,6 +96,75 @@ test("add feed dialog opens", async ({ page }) => {
   await page.getByRole("button", { name: /Add Feed/i }).click();
   await expect(page.getByRole("heading", { name: /Add Feed/i })).toBeVisible();
   await expect(page.getByPlaceholder(/https?:\/\//i)).toBeVisible();
+});
+
+test("r refreshes the selected feed, Shift+R refreshes all", async ({ page }) => {
+  const refreshed: string[] = [];
+  await page.route("**/api/v2/rss/refreshItem", (route) => {
+    refreshed.push(route.request().postData() ?? "");
+    return route.fulfill({ status: 200, contentType: "application/json", body: "null" });
+  });
+
+  await feedRow(page).click();
+  await page.keyboard.press("r");
+  await expect.poll(() => refreshed).toEqual(["itemPath=TechBlog"]);
+
+  // Shift+R fans out over every feed (two in this mock)
+  await page.keyboard.press("Shift+R");
+  await expect
+    .poll(() => refreshed)
+    .toEqual(["itemPath=TechBlog", "itemPath=TechBlog", "itemPath=News"]);
+});
+
+test("Shift+J/Shift+K switch the selected feed", async ({ page }) => {
+  await feedRow(page).click();
+  const selectedTree = () => page.locator('[role="treeitem"][aria-selected="true"]');
+  await expect(selectedTree()).toHaveText(/TechBlog/);
+
+  await page.keyboard.press("Shift+J");
+  await expect(selectedTree()).toHaveText(/^News/);
+  await expect(page.getByText("No results found")).toBeVisible(); // News has no articles
+
+  await page.keyboard.press("Shift+K");
+  await expect(selectedTree()).toHaveText(/TechBlog/);
+  await expect(page.getByText("New Release v2.0")).toBeVisible();
+});
+
+test("j/k move the article selection, Enter downloads it", async ({ page }) => {
+  await feedRow(page).click();
+  const selected = () => page.locator('[role="option"][aria-selected="true"]');
+
+  await page.keyboard.press("j");
+  await expect(selected()).toHaveText(/New Release v2\.0/);
+  await page.keyboard.press("j");
+  await expect(selected()).toHaveText(/Bug Fix v1\.9/);
+  await page.keyboard.press("k");
+  await expect(selected()).toHaveText(/New Release v2\.0/);
+
+  await page.keyboard.press("Enter");
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByPlaceholder(/magnet|https/i)).toHaveValue(/magnet:\?xt=v2/);
+});
+
+test("Enter confirms the prefilled RSS dialog, not the article link", async ({ page }) => {
+  const popups: string[] = [];
+  page.on("popup", (p) => popups.push(p.url()));
+  let addBody = "";
+  await page.route("**/api/v2/torrents/add", (route) => {
+    addBody = route.request().postData() ?? "";
+    route.fulfill({ status: 200, body: "Ok." });
+  });
+
+  await feedRow(page).click();
+  await page.keyboard.press("j");
+  await page.keyboard.press("Enter"); // opens the dialog focused on the confirm button
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+
+  await page.keyboard.press("Enter"); // must confirm — not follow the article-page anchor
+  await expect.poll(() => addBody).toContain("magnet:?xt=v2");
+  expect(popups).toEqual([]);
 });
 
 test("rename applies to the tree and saves with Enter", async ({ page }) => {

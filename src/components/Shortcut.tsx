@@ -27,6 +27,15 @@ export function Shortcut({ keys, className }: { keys: string[]; className?: stri
   return (
     <span className={cn("inline-flex shrink-0 items-center gap-1", className)} data-slot="shortcut">
       {keys.map((raw, i) => {
+        // "/" renders as a plain muted separator between alternatives
+        // (e.g. ["j", "/", "k"] → "j/k" = this OR that)
+        if (raw === "/") {
+          return (
+            <span key={`sep-${i}`} className="text-muted-foreground">
+              /
+            </span>
+          );
+        }
         const key = raw.toLowerCase();
         const label = isMac ? (MAC_SYMBOLS[key] ?? key) : key === "meta" ? "ctrl" : key;
         const isSymbol = isMac && key in MAC_SYMBOLS;

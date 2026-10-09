@@ -37,4 +37,6 @@ export default {
   "RSS is disabled on the server — enable it in Settings → RSS":
     "RSS 功能已在服务端关闭，请到 设置 → RSS 中开启",
   "Copy Feed URL": "复制 RSS 源地址",
+  "RSS hotkeys hint":
+    "j/k 选择文章 · Shift+J/K 切换订阅源 · Enter 下载 · r 刷新 · Shift+R 全部刷新",
 } satisfies Dictionary;

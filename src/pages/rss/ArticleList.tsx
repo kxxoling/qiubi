@@ -1,5 +1,7 @@
 import { ChevronRight, Download, ExternalLink, RefreshCw, Rss } from "lucide-react";
+import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { Shortcut } from "@/components/Shortcut";
 import { Button } from "@/components/ui/button";
 import {
   ContextMenu,
@@ -23,7 +25,11 @@ const formatDate = (date: string | number): string => {
 
 interface ArticleListProps {
   selectedFeed: string | null;
+  /** Newest-first; the page owns the order — keyboard nav depends on it */
   articles: RssArticle[];
+  /** Keyboard-highlighted article (j/k move it, Enter downloads it) */
+  selectedArticleId: string | null;
+  onSelectArticle: (id: string) => void;
   /** Click / "Download" menu item → open the add-torrent dialog with article context */
   onDownload: (article: RssArticle) => void;
   /** Refresh just the selected feed */
@@ -33,8 +39,24 @@ interface ArticleListProps {
 /** Right column: article list — click opens the add dialog (with article
  *  context); right-click / long-press menu offers download or opening the
  *  article's webpage (the magnet's release/detail page). */
-export function ArticleList({ selectedFeed, articles, onDownload, onRefresh }: ArticleListProps) {
+export function ArticleList({
+  selectedFeed,
+  articles,
+  selectedArticleId,
+  onSelectArticle,
+  onDownload,
+  onRefresh,
+}: ArticleListProps) {
   const { t } = useTranslation();
+  const listRef = useRef<HTMLDivElement>(null);
+
+  // Keep the keyboard-moved selection in view
+  useEffect(() => {
+    if (!selectedArticleId) return;
+    listRef.current
+      ?.querySelector(`[data-article-id="${CSS.escape(selectedArticleId)}"]`)
+      ?.scrollIntoView({ block: "nearest" });
+  }, [selectedArticleId]);
 
   return (
     <div className="flex min-h-0 flex-col overflow-hidden rounded-md border">
@@ -45,13 +67,17 @@ export function ArticleList({ selectedFeed, articles, onDownload, onRefresh }: A
           <span className="min-w-0 flex-1 truncate text-[13px] font-medium">
             {selectedFeed.split("/").pop()}
           </span>
+          {/* j/k = select previous/next article (hover for the full legend) */}
+          <span className="mr-1 hidden md:inline-flex" title={t("RSS hotkeys hint")}>
+            <Shortcut keys={["j", "/", "k"]} />
+          </span>
           <Button
             variant="ghost"
             size="icon"
             className="size-7"
             onClick={() => onRefresh(selectedFeed)}
             aria-label={t("Refresh")}
-            title={t("Refresh")}
+            title={`${t("Refresh")} (R)`}
           >
             <RefreshCw className="size-3.5" />
           </Button>
@@ -67,18 +93,28 @@ export function ArticleList({ selectedFeed, articles, onDownload, onRefresh }: A
           {t("No results found")}
         </div>
       ) : (
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto" role="listbox">
           <div className="divide-y">
-            {[...articles]
-              .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-              .map((article) => (
+            {articles.map((article) => {
+              const selected = article.id === selectedArticleId;
+              return (
                 <ContextMenu key={article.id}>
                   <ContextMenuTrigger
                     render={
                       <div
+                        role="option"
+                        aria-selected={selected}
+                        tabIndex={0}
+                        data-article-id={article.id}
                         title={article.description?.replace(/<[^>]*>/g, "") || article.title}
-                        className="group flex cursor-pointer items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-accent/50"
-                        onClick={() => onDownload(article)}
+                        className={cn(
+                          "group flex cursor-pointer items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-accent/50",
+                          selected && "bg-primary/10 hover:bg-primary/10",
+                        )}
+                        onClick={() => {
+                          onSelectArticle(article.id);
+                          onDownload(article);
+                        }}
                       />
                     }
                   >
@@ -122,7 +158,8 @@ export function ArticleList({ selectedFeed, articles, onDownload, onRefresh }: A
                     )}
                   </ContextMenuContent>
                 </ContextMenu>
-              ))}
+              );
+            })}
           </div>
         </div>
       )}

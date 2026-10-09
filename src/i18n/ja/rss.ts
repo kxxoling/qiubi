@@ -37,4 +37,6 @@ export default {
   "RSS is disabled on the server — enable it in Settings → RSS":
     "サーバーで RSS が無効です — 設定 → RSS で有効にしてください",
   "Copy Feed URL": "フィードURLをコピー",
+  "RSS hotkeys hint":
+    "j/k 記事を選択 · Shift+J/K フィード切替 · Enter ダウンロード · r 更新 · Shift+R すべて更新",
 } satisfies Dictionary;

@@ -37,4 +37,6 @@ export default {
   "RSS is disabled on the server — enable it in Settings → RSS":
     "서버에서 RSS가 비활성되어 있습니다 — 설정 → RSS에서 활성화하세요",
   "Copy Feed URL": "피드 URL 복사",
+  "RSS hotkeys hint":
+    "j/k 기사 선택 · Shift+J/K 피드 전환 · Enter 다운로드 · r 새로 고침 · Shift+R 모두 새로 고침",
 } satisfies Dictionary;
