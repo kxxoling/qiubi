@@ -92,6 +92,21 @@ test("add feed dialog opens", async ({ page }) => {
   await expect(page.getByPlaceholder(/https?:\/\//i)).toBeVisible();
 });
 
+test("r refreshes the selected feed, Shift+R refreshes all", async ({ page }) => {
+  const refreshed: string[] = [];
+  await page.route("**/api/v2/rss/refreshItem", (route) => {
+    refreshed.push(route.request().postData() ?? "");
+    return route.fulfill({ status: 200, contentType: "application/json", body: "null" });
+  });
+
+  await feedRow(page).click();
+  await page.keyboard.press("r");
+  await expect.poll(() => refreshed).toEqual(["itemPath=TechBlog"]);
+
+  await page.keyboard.press("Shift+R");
+  await expect.poll(() => refreshed).toEqual(["itemPath=TechBlog", "itemPath=TechBlog"]);
+});
+
 test("rename applies to the tree and saves with Enter", async ({ page }) => {
   let renamed = false;
   let moveBody = "";

@@ -9,7 +9,7 @@ import {
   Rss,
   Settings,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { qbtClient } from "@/api/qbt";
@@ -288,6 +288,32 @@ export function RssPage() {
     await qbtClient.markRssAsRead(path);
     await qc.invalidateQueries({ queryKey: ["rss-feeds"] });
   };
+
+  // Page hotkeys: r refreshes the selected feed, Shift+R refreshes all.
+  // Plain keys only — ctrl/meta/alt combos belong to the browser (Cmd+R
+  // reloads); ignored while typing in a field or with a dialog open.
+  // The handlers are redefined every render; a ref keeps the listener
+  // subscribed once while always invoking the latest handlers (the torrent
+  // table's depsRef pattern) — unstable identities in the deps array are
+  // what the linter rejects.
+  const refreshRef = useRef({ refreshOne, refreshAll });
+  refreshRef.current = { refreshOne, refreshAll };
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== "r" && e.key !== "R") return;
+      if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if (addDialog || renameTarget || deleteTarget || !rssEnabled) return;
+      if (e.shiftKey) {
+        void refreshRef.current.refreshAll();
+      } else if (selectedFeed) {
+        void refreshRef.current.refreshOne(selectedFeed);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [addDialog, renameTarget, deleteTarget, rssEnabled, selectedFeed]);
 
   if (isLoading) {
     return <div className="text-muted-foreground">{t("Connecting...")}</div>;
