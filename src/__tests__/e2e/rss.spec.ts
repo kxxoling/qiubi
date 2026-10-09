@@ -31,6 +31,12 @@ const mockFeeds = {
       },
     ],
   },
+  News: {
+    uid: "2",
+    url: "https://news.example.com/rss",
+    title: "News",
+    articles: [],
+  },
 };
 
 test.beforeEach(async ({ page }) => {
@@ -103,8 +109,25 @@ test("r refreshes the selected feed, Shift+R refreshes all", async ({ page }) =>
   await page.keyboard.press("r");
   await expect.poll(() => refreshed).toEqual(["itemPath=TechBlog"]);
 
+  // Shift+R fans out over every feed (two in this mock)
   await page.keyboard.press("Shift+R");
-  await expect.poll(() => refreshed).toEqual(["itemPath=TechBlog", "itemPath=TechBlog"]);
+  await expect
+    .poll(() => refreshed)
+    .toEqual(["itemPath=TechBlog", "itemPath=TechBlog", "itemPath=News"]);
+});
+
+test("Shift+J/Shift+K switch the selected feed", async ({ page }) => {
+  await feedRow(page).click();
+  const selectedTree = () => page.locator('[role="treeitem"][aria-selected="true"]');
+  await expect(selectedTree()).toHaveText(/TechBlog/);
+
+  await page.keyboard.press("Shift+J");
+  await expect(selectedTree()).toHaveText(/^News/);
+  await expect(page.getByText("No results found")).toBeVisible(); // News has no articles
+
+  await page.keyboard.press("Shift+K");
+  await expect(selectedTree()).toHaveText(/TechBlog/);
+  await expect(page.getByText("New Release v2.0")).toBeVisible();
 });
 
 test("j/k move the article selection, Enter downloads it", async ({ page }) => {

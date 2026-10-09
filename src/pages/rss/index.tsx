@@ -13,6 +13,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { qbtClient } from "@/api/qbt";
+import { Shortcut } from "@/components/Shortcut";
 import { openAddTorrentDialog } from "@/components/torrent/AddTorrentDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -306,7 +307,7 @@ export function RssPage() {
 
   // Page hotkeys: j/k move the article selection (vim-style, like the
   // global ⌘J/⌘K shortcuts — plain arrow keys would fight page scrolling),
-  // Enter downloads the selected article, r refreshes the selected feed,
+  // Shift+J/K switch the feed, Enter downloads the selected article, r refreshes the selected feed,
   // Shift+R refreshes all. Plain keys only — ctrl/meta/alt combos belong to
   // the browser (Cmd+R reloads); inert while a field has focus or any
   // dialog is open (the global add-torrent dialog's state lives outside
@@ -314,8 +315,20 @@ export function RssPage() {
   // render; a ref keeps the listener subscribed once while always reading
   // the latest (the torrent table's depsRef pattern) — unstable identities
   // in the deps array are what the linter rejects.
-  const hotkeyRef = useRef({ refreshOne, refreshAll, downloadArticle, sortedArticles });
-  hotkeyRef.current = { refreshOne, refreshAll, downloadArticle, sortedArticles };
+  const hotkeyRef = useRef({
+    refreshOne,
+    refreshAll,
+    downloadArticle,
+    sortedArticles,
+    feedPaths: [] as string[],
+  });
+  hotkeyRef.current = {
+    refreshOne,
+    refreshAll,
+    downloadArticle,
+    sortedArticles,
+    feedPaths: feedOnly.map((f) => f.path),
+  };
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
@@ -323,16 +336,34 @@ export function RssPage() {
       const tag = (e.target as HTMLElement).tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
 
-      if (e.key === "j" || e.key === "k") {
+      const key = e.key.toLowerCase();
+      if (key === "j" || key === "k") {
+        const down = key === "j";
+        if (e.shiftKey) {
+          // Feed switching: move through the feeds-only list in tree order
+          const feeds = hotkeyRef.current.feedPaths;
+          if (feeds.length === 0) return;
+          const idx = selectedFeed ? feeds.indexOf(selectedFeed) : -1;
+          const next =
+            idx === -1
+              ? down
+                ? 0
+                : feeds.length - 1
+              : down
+                ? Math.min(idx + 1, feeds.length - 1)
+                : Math.max(idx - 1, 0);
+          setSelectedFeed(feeds[next]);
+          return;
+        }
         const list = hotkeyRef.current.sortedArticles;
         if (list.length === 0) return;
         const idx = list.findIndex((a) => a.id === selectedArticleId);
         const next =
           idx === -1
-            ? e.key === "j"
+            ? down
               ? 0
               : list.length - 1
-            : e.key === "j"
+            : down
               ? Math.min(idx + 1, list.length - 1)
               : Math.max(idx - 1, 0);
         setSelectedArticleId(list[next].id);
@@ -385,6 +416,10 @@ export function RssPage() {
         <Rss className="size-5 shrink-0 text-orange-500" />
         <span className="text-base font-semibold">{t("RSS")}</span>
         {totalUnread > 0 && <Badge variant="secondary">{totalUnread}</Badge>}
+        {/* Shift+j/k = switch the current feed (hover for the full legend) */}
+        <span className="ml-1 hidden sm:inline-flex" title={t("RSS hotkeys hint")}>
+          <Shortcut keys={["shift", "j", "/", "k"]} />
+        </span>
         <div className="ml-auto flex items-center gap-1.5">
           <Button
             variant="ghost"
@@ -393,6 +428,7 @@ export function RssPage() {
             onClick={refreshAll}
             disabled={!rssEnabled}
             aria-label={t("Refresh All")}
+            title={`${t("Refresh All")} (Shift+R)`}
           >
             <RefreshCcw className="size-4" />
           </Button>

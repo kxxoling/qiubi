@@ -1,6 +1,7 @@
 import { ChevronRight, Download, ExternalLink, RefreshCw, Rss } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { Shortcut } from "@/components/Shortcut";
 import { Button } from "@/components/ui/button";
 import {
   ContextMenu,
@@ -66,13 +67,17 @@ export function ArticleList({
           <span className="min-w-0 flex-1 truncate text-[13px] font-medium">
             {selectedFeed.split("/").pop()}
           </span>
+          {/* j/k = select previous/next article (hover for the full legend) */}
+          <span className="mr-1 hidden md:inline-flex" title={t("RSS hotkeys hint")}>
+            <Shortcut keys={["j", "/", "k"]} />
+          </span>
           <Button
             variant="ghost"
             size="icon"
             className="size-7"
             onClick={() => onRefresh(selectedFeed)}
             aria-label={t("Refresh")}
-            title={t("Refresh")}
+            title={`${t("Refresh")} (R)`}
           >
             <RefreshCw className="size-3.5" />
           </Button>
