@@ -107,6 +107,43 @@ test("r refreshes the selected feed, Shift+R refreshes all", async ({ page }) =>
   await expect.poll(() => refreshed).toEqual(["itemPath=TechBlog", "itemPath=TechBlog"]);
 });
 
+test("j/k move the article selection, Enter downloads it", async ({ page }) => {
+  await feedRow(page).click();
+  const selected = () => page.locator('[role="option"][aria-selected="true"]');
+
+  await page.keyboard.press("j");
+  await expect(selected()).toHaveText(/New Release v2\.0/);
+  await page.keyboard.press("j");
+  await expect(selected()).toHaveText(/Bug Fix v1\.9/);
+  await page.keyboard.press("k");
+  await expect(selected()).toHaveText(/New Release v2\.0/);
+
+  await page.keyboard.press("Enter");
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByPlaceholder(/magnet|https/i)).toHaveValue(/magnet:\?xt=v2/);
+});
+
+test("Enter confirms the prefilled RSS dialog, not the article link", async ({ page }) => {
+  const popups: string[] = [];
+  page.on("popup", (p) => popups.push(p.url()));
+  let addBody = "";
+  await page.route("**/api/v2/torrents/add", (route) => {
+    addBody = route.request().postData() ?? "";
+    route.fulfill({ status: 200, body: "Ok." });
+  });
+
+  await feedRow(page).click();
+  await page.keyboard.press("j");
+  await page.keyboard.press("Enter"); // opens the dialog focused on the confirm button
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+
+  await page.keyboard.press("Enter"); // must confirm — not follow the article-page anchor
+  await expect.poll(() => addBody).toContain("magnet:?xt=v2");
+  expect(popups).toEqual([]);
+});
+
 test("rename applies to the tree and saves with Enter", async ({ page }) => {
   let renamed = false;
   let moveBody = "";

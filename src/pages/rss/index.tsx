@@ -9,7 +9,7 @@ import {
   Rss,
   Settings,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { qbtClient } from "@/api/qbt";
@@ -55,6 +55,8 @@ export function RssPage() {
   const [addDialog, setAddDialog] = useState(false);
   const [feedUrl, setFeedUrl] = useState("");
   const [selectedFeed, setSelectedFeed] = useState<string | null>(null);
+  /** Keyboard-highlighted article in the visible list (by id — survives refetches) */
+  const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   /** Rename dialog target: feed path + editable display name (last path segment) */
   const [renameTarget, setRenameTarget] = useState<{ path: string; name: string } | null>(null);
@@ -88,6 +90,18 @@ export function RssPage() {
 
   const selected = flat.find((x) => x.path === selectedFeed);
   const selectedArticles: RssArticle[] = selected?.feed.articles ?? [];
+  /** Newest-first — the exact order ArticleList renders; keyboard nav walks it */
+  const sortedArticles = useMemo(
+    () =>
+      [...selectedArticles].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+    [selectedArticles],
+  );
+
+  // Keyboard selection tracks the visible list: switching feeds clears it
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset-on-change is the whole point — the body intentionally doesn't read selectedFeed
+  useEffect(() => {
+    setSelectedArticleId(null);
+  }, [selectedFeed]);
   const feedOnly = flat.filter((f) => !f.feed.children);
 
   const handleAddFeed = async () => {
@@ -194,6 +208,7 @@ export function RssPage() {
               href={article.link}
               target="_blank"
               rel="noreferrer"
+              tabIndex={-1}
               className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
             >
               <ExternalLink className="size-3" />
@@ -289,31 +304,56 @@ export function RssPage() {
     await qc.invalidateQueries({ queryKey: ["rss-feeds"] });
   };
 
-  // Page hotkeys: r refreshes the selected feed, Shift+R refreshes all.
-  // Plain keys only — ctrl/meta/alt combos belong to the browser (Cmd+R
-  // reloads); ignored while typing in a field or with a dialog open.
-  // The handlers are redefined every render; a ref keeps the listener
-  // subscribed once while always invoking the latest handlers (the torrent
-  // table's depsRef pattern) — unstable identities in the deps array are
-  // what the linter rejects.
-  const refreshRef = useRef({ refreshOne, refreshAll });
-  refreshRef.current = { refreshOne, refreshAll };
+  // Page hotkeys: j/k move the article selection (vim-style, like the
+  // global ⌘J/⌘K shortcuts — plain arrow keys would fight page scrolling),
+  // Enter downloads the selected article, r refreshes the selected feed,
+  // Shift+R refreshes all. Plain keys only — ctrl/meta/alt combos belong to
+  // the browser (Cmd+R reloads); inert while a field has focus or any
+  // dialog is open (the global add-torrent dialog's state lives outside
+  // this page, hence the DOM check). Handlers/values are redefined every
+  // render; a ref keeps the listener subscribed once while always reading
+  // the latest (the torrent table's depsRef pattern) — unstable identities
+  // in the deps array are what the linter rejects.
+  const hotkeyRef = useRef({ refreshOne, refreshAll, downloadArticle, sortedArticles });
+  hotkeyRef.current = { refreshOne, refreshAll, downloadArticle, sortedArticles };
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key !== "r" && e.key !== "R") return;
-      if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.target instanceof Element && e.target.closest("[role=dialog]")) return;
       const tag = (e.target as HTMLElement).tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
-      if (addDialog || renameTarget || deleteTarget || !rssEnabled) return;
+
+      if (e.key === "j" || e.key === "k") {
+        const list = hotkeyRef.current.sortedArticles;
+        if (list.length === 0) return;
+        const idx = list.findIndex((a) => a.id === selectedArticleId);
+        const next =
+          idx === -1
+            ? e.key === "j"
+              ? 0
+              : list.length - 1
+            : e.key === "j"
+              ? Math.min(idx + 1, list.length - 1)
+              : Math.max(idx - 1, 0);
+        setSelectedArticleId(list[next].id);
+        return;
+      }
+      if (e.key === "Enter") {
+        const article = hotkeyRef.current.sortedArticles.find((a) => a.id === selectedArticleId);
+        if (article) void hotkeyRef.current.downloadArticle(article);
+        return;
+      }
+      if (e.key !== "r" && e.key !== "R") return;
+      if (e.repeat || addDialog || renameTarget || deleteTarget || !rssEnabled) return;
       if (e.shiftKey) {
-        void refreshRef.current.refreshAll();
+        void hotkeyRef.current.refreshAll();
       } else if (selectedFeed) {
-        void refreshRef.current.refreshOne(selectedFeed);
+        void hotkeyRef.current.refreshOne(selectedFeed);
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [addDialog, renameTarget, deleteTarget, rssEnabled, selectedFeed]);
+  }, [addDialog, renameTarget, deleteTarget, rssEnabled, selectedFeed, selectedArticleId]);
 
   if (isLoading) {
     return <div className="text-muted-foreground">{t("Connecting...")}</div>;
@@ -398,7 +438,9 @@ export function RssPage() {
         {/* Right: article list (wide) */}
         <ArticleList
           selectedFeed={selectedFeed}
-          articles={selectedArticles}
+          articles={sortedArticles}
+          selectedArticleId={selectedArticleId}
+          onSelectArticle={setSelectedArticleId}
           onDownload={downloadArticle}
           onRefresh={refreshOne}
         />
