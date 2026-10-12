@@ -2,12 +2,14 @@ import { buildTorrent } from "../factories";
 import { expect, setupDefaultRoutes, test } from "./fixtures";
 
 /**
- * Sidebar (FilterSidebar) context-menu E2E tests
+ * Sidebar (FilterSidebar) E2E tests — row context menus + section collapsing
  *
  * Category rows get the qBT-style menu (resume → pause → remove torrents +
  * remove unused categories), tracker rows the torrent ops, and the pseudo
  * rows (All/Uncategorized/Trackerless) the torrent ops scoped to their torrents.
- * The sync/maindata poll answers with a constant payload so the DOM is stable.
+ * Section headers collapse/expand their rows (the tracker list especially can
+ * grow long). The sync/maindata poll answers with a constant payload so the
+ * DOM is stable.
  */
 
 const trackerUrl = "https://tracker.example.com/announce";
@@ -143,6 +145,19 @@ test("resume from tracker menu posts the tracker's hashes", async ({ page }) => 
   await page.getByRole("menuitem", { name: "Resume Torrents" }).click();
   await expect.poll(() => bodies.length).toBeGreaterThan(0);
   expect(bodies[0]).toBe("hashes=hash1%7Chash2");
+});
+
+test("tracker section collapses and expands via header click", async ({ page }) => {
+  const trackerRow = sidebarRow(page, "tracker.example.com");
+  await expect(trackerRow).toBeVisible();
+
+  // Collapsing hides the tracker rows while the other sections stay put
+  await page.getByRole("button", { name: "Tracker", exact: true }).click();
+  await expect(trackerRow).toHaveCount(0);
+  await expect(sidebarRow(page, "movies")).toBeVisible();
+
+  await page.getByRole("button", { name: "Tracker", exact: true }).click();
+  await expect(trackerRow).toBeVisible();
 });
 
 test("pseudo rows (All/Uncategorized/Trackerless) have torrent-ops menus", async ({ page }) => {

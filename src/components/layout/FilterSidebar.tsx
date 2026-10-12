@@ -10,10 +10,14 @@
  * Uncategorized / Trackerless — carries a right-click menu with the qBT
  * torrent ops (resume → pause → remove) scoped to its torrents; custom
  * category rows add remove-unused management below.
+ *
+ * Each section header collapses/expands its rows (persisted), so a long
+ * tracker list can be tucked away.
  */
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import {
+  ChevronDown,
   ChevronRight,
   FolderMinus,
   FolderOpen,
@@ -37,6 +41,7 @@ import {
 } from "@/components/ui/context-menu";
 import { useTorrentList } from "@/hooks/useMainDataSync";
 import { cn } from "@/lib/utils";
+import { useUiStore } from "@/stores/ui";
 import type { TorrentInfo } from "@/types/qbt";
 
 function FilterRow({
@@ -132,14 +137,30 @@ function TorrentOpItems({
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+/** Collapsible filter group: the header toggles its rows (persisted in the ui store) */
+function Section({
+  id,
+  title,
+  children,
+}: {
+  id: string;
+  title: string;
+  children: React.ReactNode;
+}) {
+  const collapsed = useUiStore((s) => s.sidebarSectionsCollapsed[id] ?? false);
+  const toggleSection = useUiStore((s) => s.toggleSidebarSection);
   return (
     <div>
-      <div className="flex items-center gap-1 px-2 pb-1 pt-3 text-xs font-semibold text-muted-foreground">
-        <ChevronRight className="h-3 w-3" />
+      <button
+        type="button"
+        onClick={() => toggleSection(id)}
+        aria-expanded={!collapsed}
+        className="flex w-full items-center gap-1 px-2 pb-1 pt-3 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
+      >
+        {collapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
         {title}
-      </div>
-      <div className="space-y-0.5">{children}</div>
+      </button>
+      {!collapsed && <div className="space-y-0.5">{children}</div>}
     </div>
   );
 }
@@ -275,7 +296,7 @@ export function FilterSidebar({ onSelect }: { onSelect?: () => void } = {}) {
   return (
     <aside className="flex h-full flex-col overflow-y-auto bg-card p-2">
       {/* Categories */}
-      <Section title={t("Category")}>
+      <Section id="category" title={t("Category")}>
         <FilterRow
           active={category === ""}
           label={t("All")}
@@ -324,7 +345,7 @@ export function FilterSidebar({ onSelect }: { onSelect?: () => void } = {}) {
 
       {/* Tags */}
       {tags && tags.length > 0 && (
-        <Section title={t("Tags")}>
+        <Section id="tags" title={t("Tags")}>
           <FilterRow
             active={tag === ""}
             label={t("All")}
@@ -352,7 +373,7 @@ export function FilterSidebar({ onSelect }: { onSelect?: () => void } = {}) {
       )}
 
       {/* Tracker */}
-      <Section title={t("Tracker")}>
+      <Section id="tracker" title={t("Tracker")}>
         <FilterRow
           active={tracker === ""}
           label={t("All")}
