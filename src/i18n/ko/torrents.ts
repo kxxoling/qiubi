@@ -60,4 +60,8 @@ export default {
   "Edit Category": "카테고리 편집",
   "Delete category confirm":
     '카테고리 "{name}"을(를) 삭제하시겠습니까? 토렌트는 삭제되지 않습니다.',
+  "Resume Torrents": "토렌트 재개",
+  "Pause Torrents": "토렌트 일시정지",
+  "Remove Torrents": "토렌트 제거",
+  "Remove Unused Categories": "사용하지 않는 카테고리 제거",
 } satisfies Dictionary;

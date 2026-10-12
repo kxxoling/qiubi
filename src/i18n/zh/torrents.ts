@@ -59,4 +59,8 @@ export default {
   "New Category": "新建分类",
   "Edit Category": "编辑分类",
   "Delete category confirm": "确认删除分类「{name}」？种子不会被删除。",
+  "Resume Torrents": "继续 Torrent",
+  "Pause Torrents": "暂停 Torrent",
+  "Remove Torrents": "移除 Torrent",
+  "Remove Unused Categories": "移除未使用的分类",
 } satisfies Dictionary;

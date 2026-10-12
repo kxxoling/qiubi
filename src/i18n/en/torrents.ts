@@ -59,4 +59,8 @@ export default {
   "New Category": "New Category",
   "Edit Category": "Edit Category",
   "Delete category confirm": 'Delete category "{name}"? Torrents will not be deleted.',
+  "Resume Torrents": "Resume Torrents",
+  "Pause Torrents": "Pause Torrents",
+  "Remove Torrents": "Remove Torrents",
+  "Remove Unused Categories": "Remove Unused Categories",
 } satisfies Dictionary;
