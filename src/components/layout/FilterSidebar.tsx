@@ -6,10 +6,11 @@
  * - Tags: All / Untagged / custom tags
  * - Trackers: All / Trackerless / per-tracker domains (with torrent counts)
  *
- * Every category/tracker row — custom rows AND the pseudo rows All /
- * Uncategorized / Trackerless — carries a right-click menu with the qBT
- * torrent ops (resume → pause → remove) scoped to its torrents; custom
- * category rows add remove-unused management below.
+ * Every row (custom categories/tags/trackers AND the pseudo rows All /
+ * Uncategorized / Untagged / Trackerless) carries a right-click menu with
+ * the qBT torrent ops (resume → pause → remove) scoped to its torrents;
+ * custom category/tag rows add remove-unused management below/above them.
+ * The tags section always renders, empty or not.
  *
  * Each section header collapses/expands its rows (persisted), so a long
  * tracker list can be tucked away.
@@ -25,6 +26,7 @@ import {
   Play,
   Radio,
   Tag,
+  TagX,
   Trash2,
 } from "lucide-react";
 import { useState } from "react";
@@ -259,6 +261,16 @@ export function FilterSidebar({ onSelect }: { onSelect?: () => void } = {}) {
     if (list.length === 0) untagged++;
     for (const tg of list) tagCounts.set(tg, (tagCounts.get(tg) ?? 0) + 1);
   }
+  const tagHashes = (name: string) =>
+    (torrents ?? [])
+      .filter((tr) =>
+        tr.tags
+          .split(",")
+          .map((s) => s.trim())
+          .includes(name),
+      )
+      .map((tr) => tr.hash);
+  const unusedTagNames = (tags ?? []).filter((tg) => (tagCounts.get(tg) ?? 0) === 0);
 
   // Tracker membership (host → member hashes; counts are the set sizes)
   const trackers = trackerHosts(data?.trackers, torrents);
@@ -280,10 +292,31 @@ export function FilterSidebar({ onSelect }: { onSelect?: () => void } = {}) {
 
   const openDeleteDialog = (hashes: string[]) => setDeleteDialog({ hashes, open: true });
 
+  const deleteUnusedTags = async () => {
+    if (unusedTagNames.length === 0) return;
+    try {
+      await qbtClient.deleteTags(unusedTagNames);
+      toast.success(t("Deleted"));
+      await qc.invalidateQueries({ queryKey: ["tags"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    }
+  };
+
   // Pseudo-row scopes: every sidebar row acts on its own slice of torrents
   const allHashes = () => (torrents ?? []).map((tr) => tr.hash);
   const uncategorizedHashes = () =>
     (torrents ?? []).filter((tr) => !tr.category).map((tr) => tr.hash);
+  const untaggedHashes = () =>
+    (torrents ?? [])
+      .filter(
+        (tr) =>
+          tr.tags
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean).length === 0,
+      )
+      .map((tr) => tr.hash);
   const trackerlessHashes = () => (torrents ?? []).filter((tr) => !tr.tracker).map((tr) => tr.hash);
 
   /** Torrent-ops menu content for a fixed scope (the pseudo rows) */
@@ -343,34 +376,48 @@ export function FilterSidebar({ onSelect }: { onSelect?: () => void } = {}) {
           ))}
       </Section>
 
-      {/* Tags */}
-      {tags && tags.length > 0 && (
-        <Section id="tags" title={t("Tags")}>
+      {/* Tags — always rendered, empty or not */}
+      <Section id="tags" title={t("Tags")}>
+        <FilterRow
+          active={tag === ""}
+          label={t("All")}
+          count={torrents?.length ?? 0}
+          onClick={() => setUrlFilter({ tag: "" })}
+          contextMenu={torrentOpsMenu(allHashes, torrents?.length ?? 0)}
+        />
+        <FilterRow
+          active={tag === "__untagged__"}
+          label={t("Untagged")}
+          count={untagged}
+          icon={<Tag className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
+          onClick={() => setUrlFilter({ tag: "__untagged__" })}
+          contextMenu={torrentOpsMenu(untaggedHashes, untagged)}
+        />
+        {[...(tags ?? [])].sort().map((tg) => (
           <FilterRow
-            active={tag === ""}
-            label={t("All")}
-            count={torrents?.length ?? 0}
-            onClick={() => setUrlFilter({ tag: "" })}
-          />
-          <FilterRow
-            active={tag === "__untagged__"}
-            label={t("Untagged")}
-            count={untagged}
+            key={tg}
+            active={tag === tg}
+            label={tg}
+            count={tagCounts.get(tg) ?? 0}
             icon={<Tag className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
-            onClick={() => setUrlFilter({ tag: "__untagged__" })}
+            onClick={() => setUrlFilter({ tag: tg })}
+            contextMenu={
+              <ContextMenuContent>
+                <ContextMenuItem disabled={unusedTagNames.length === 0} onClick={deleteUnusedTags}>
+                  <TagX />
+                  {t("Delete Unused Tags")}
+                </ContextMenuItem>
+                <ContextMenuSeparator />
+                <TorrentOpItems
+                  getHashes={() => tagHashes(tg)}
+                  disabled={(tagCounts.get(tg) ?? 0) === 0}
+                  onRemove={openDeleteDialog}
+                />
+              </ContextMenuContent>
+            }
           />
-          {[...tags].sort().map((tg) => (
-            <FilterRow
-              key={tg}
-              active={tag === tg}
-              label={tg}
-              count={tagCounts.get(tg) ?? 0}
-              icon={<Tag className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
-              onClick={() => setUrlFilter({ tag: tg })}
-            />
-          ))}
-        </Section>
-      )}
+        ))}
+      </Section>
 
       {/* Tracker */}
       <Section id="tracker" title={t("Tracker")}>

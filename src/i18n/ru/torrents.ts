@@ -63,4 +63,5 @@ export default {
   "Pause Torrents": "Приостановить торренты",
   "Remove Torrents": "Удалить торренты",
   "Remove Unused Categories": "Удалить неиспользуемые категории",
+  "Delete Unused Tags": "Удалить неиспользуемые метки",
 } satisfies Dictionary;

@@ -63,4 +63,5 @@ export default {
   "Pause Torrents": "暂停 Torrent",
   "Remove Torrents": "移除 Torrent",
   "Remove Unused Categories": "移除未使用的分类",
+  "Delete Unused Tags": "删除未使用的标签",
 } satisfies Dictionary;

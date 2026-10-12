@@ -4,12 +4,11 @@ import { expect, setupDefaultRoutes, test } from "./fixtures";
 /**
  * Sidebar (FilterSidebar) E2E tests — row context menus + section collapsing
  *
- * Category rows get the qBT-style menu (resume → pause → remove torrents +
- * remove unused categories), tracker rows the torrent ops, and the pseudo
- * rows (All/Uncategorized/Trackerless) the torrent ops scoped to their torrents.
- * Section headers collapse/expand their rows (the tracker list especially can
- * grow long). The sync/maindata poll answers with a constant payload so the
- * DOM is stable.
+ * Every row carries the qBT torrent ops scoped to its torrents, including the
+ * pseudo rows (All/Uncategorized/Untagged/Trackerless); custom category/tag
+ * rows additionally offer remove-unused management. Section headers
+ * collapse/expand their rows (the tracker list especially can grow long).
+ * The sync/maindata poll answers with a constant payload so the DOM is stable.
  */
 
 const trackerUrl = "https://tracker.example.com/announce";
@@ -84,6 +83,16 @@ test.beforeEach(async ({ page }) => {
 const sidebarRow = (page: import("@playwright/test").Page, label: string) =>
   page.getByRole("button", { name: new RegExp(`^${label}`) });
 
+/** maindata payload variant where hash1 carries the tag "anime" and an unused tag exists */
+const taggedMaindataPayload = {
+  ...maindataPayload,
+  tags: ["anime", "unused"],
+  torrents: {
+    hash1: { ...mockTorrents[0], tags: "anime" },
+    hash2: { ...mockTorrents[1], tags: "" },
+  },
+};
+
 test("category row menu lists torrent ops and category management", async ({ page }) => {
   await sidebarRow(page, "movies").dispatchEvent("contextmenu");
   await expect(page.getByRole("menuitem", { name: "Resume Torrents" })).toBeVisible();
@@ -130,6 +139,7 @@ test("tracker row menu has the torrent ops only", async ({ page }) => {
   await expect(page.getByRole("menuitem", { name: "Resume Torrents" })).toBeVisible();
   await expect(page.getByRole("menuitem", { name: "Pause Torrents" })).toBeVisible();
   await expect(page.getByRole("menuitem", { name: "Remove Torrents" })).toBeVisible();
+  // management items belong to category/tag rows, not tracker rows
   await expect(page.getByRole("menuitem", { name: "Remove Unused Categories" })).toHaveCount(0);
 });
 
@@ -160,10 +170,20 @@ test("tracker section collapses and expands via header click", async ({ page }) 
   await expect(trackerRow).toBeVisible();
 });
 
-test("pseudo rows (All/Uncategorized/Trackerless) have torrent-ops menus", async ({ page }) => {
+test("tags section renders even without any tags", async ({ page }) => {
+  // Shared payload has tags: []; the section must still show (All/Untagged)
+  await expect(page.getByRole("button", { name: "Tags", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Untagged/ })).toBeVisible();
+});
+
+test("pseudo rows (All/Uncategorized/Untagged/Trackerless) have torrent-ops menus", async ({
+  page,
+}) => {
   const rows: [section: string, row: RegExp][] = [
     ["Category", /^All/],
     ["Category", /^Uncategorized/],
+    ["Tags", /^All/],
+    ["Tags", /^Untagged/],
     ["Tracker", /^All/],
     ["Tracker", /^Trackerless/],
   ];
@@ -193,4 +213,63 @@ test("pause from trackerless row posts only the trackerless torrent's hash", asy
   await page.getByRole("menuitem", { name: "Pause Torrents" }).click();
   await expect.poll(() => bodies.length).toBeGreaterThan(0);
   expect(bodies[0]).toBe("hashes=hash3");
+});
+
+test("tag row menu lists tag management above the torrent ops", async ({ page }) => {
+  await page.route("**/api/v2/sync/maindata*", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(taggedMaindataPayload),
+    }),
+  );
+  await page.reload();
+
+  await sidebarRow(page, "anime").dispatchEvent("contextmenu");
+  await expect(page.getByRole("menuitem", { name: "Delete Unused Tags" })).toBeVisible();
+  await expect(page.getByRole("menuitem", { name: "Resume Torrents" })).toBeVisible();
+  await expect(page.getByRole("menuitem", { name: "Pause Torrents" })).toBeVisible();
+  await expect(page.getByRole("menuitem", { name: "Remove Torrents" })).toBeVisible();
+});
+
+test("pause from tag row posts only that tag's hashes", async ({ page }) => {
+  const bodies: string[] = [];
+  await page.route("**/api/v2/torrents/stop", (route) => {
+    bodies.push(route.request().postData() ?? "");
+    return route.fulfill({ status: 200, body: "Ok." });
+  });
+  await page.route("**/api/v2/sync/maindata*", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(taggedMaindataPayload),
+    }),
+  );
+  await page.reload();
+
+  await sidebarRow(page, "anime").dispatchEvent("contextmenu");
+  await page.getByRole("menuitem", { name: "Pause Torrents" }).click();
+  await expect.poll(() => bodies.length).toBeGreaterThan(0);
+  expect(bodies[0]).toBe("hashes=hash1");
+});
+
+test("delete unused tags posts only the unused ones", async ({ page }) => {
+  const bodies: string[] = [];
+  await page.route("**/api/v2/torrents/deleteTags", (route) => {
+    bodies.push(route.request().postData() ?? "");
+    return route.fulfill({ status: 200, body: "Ok." });
+  });
+  await page.route("**/api/v2/sync/maindata*", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(taggedMaindataPayload),
+    }),
+  );
+  await page.reload();
+
+  await sidebarRow(page, "anime").dispatchEvent("contextmenu");
+  await page.getByRole("menuitem", { name: "Delete Unused Tags" }).click();
+  await expect.poll(() => bodies.length).toBeGreaterThan(0);
+  expect(bodies[0]).toBe("tags=unused");
 });

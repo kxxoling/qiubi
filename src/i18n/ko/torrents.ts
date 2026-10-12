@@ -64,4 +64,5 @@ export default {
   "Pause Torrents": "토렌트 일시정지",
   "Remove Torrents": "토렌트 제거",
   "Remove Unused Categories": "사용하지 않는 카테고리 제거",
+  "Delete Unused Tags": "사용하지 않는 태그 삭제",
 } satisfies Dictionary;

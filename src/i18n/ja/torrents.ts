@@ -63,4 +63,5 @@ export default {
   "Pause Torrents": "トレントを一時停止",
   "Remove Torrents": "トレントを削除",
   "Remove Unused Categories": "未使用のカテゴリを削除",
+  "Delete Unused Tags": "未使用のタグを削除",
 } satisfies Dictionary;
