@@ -84,7 +84,23 @@ function FilterRow({
   }
   return (
     <ContextMenu>
-      <ContextMenuTrigger render={<button type="button" onClick={onClick} className={className} />}>
+      <ContextMenuTrigger
+        render={
+          <button
+            type="button"
+            onClick={onClick}
+            onContextMenu={(e) => {
+              // Official qBT also selects (filters) the row on right-click:
+              // the highlight plus the filtered list show exactly which
+              // torrents the menu will act on. Touch long-press reports
+              // button 0 — keep it menu-only there so the mobile filter
+              // drawer doesn't get dismissed mid-interaction.
+              if (e.button === 2) onClick();
+            }}
+            className={className}
+          />
+        }
+      >
         {content}
       </ContextMenuTrigger>
       {contextMenu}

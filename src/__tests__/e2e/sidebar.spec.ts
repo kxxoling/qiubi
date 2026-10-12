@@ -273,3 +273,22 @@ test("delete unused tags posts only the unused ones", async ({ page }) => {
   await expect.poll(() => bodies.length).toBeGreaterThan(0);
   expect(bodies[0]).toBe("tags=unused");
 });
+
+test("right-clicking a row also selects it and filters the list (official qBT)", async ({
+  page,
+}) => {
+  // A real MouseEvent with button 2 (locator.dispatchEvent would construct a
+  // plain Event whose `button` is undefined, unlike a genuine mouse right-click;
+  // touch long-press reports button 0 and must NOT select)
+  await sidebarRow(page, "movies").evaluate((el) => {
+    el.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, button: 2 }));
+  });
+  await expect(page).toHaveURL(/category=movies/);
+  // The menu stays open on the now-highlighted row…
+  await expect(page.getByRole("menuitem", { name: "Pause Torrents" })).toBeVisible();
+  // …and the list already shows the exact torrents the menu acts on
+  await expect(page.getByText("Movie One")).toBeVisible();
+  await expect(page.getByText("Standalone")).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  await expect(page).toHaveURL(/category=movies/);
+});
