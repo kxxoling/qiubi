@@ -24,8 +24,11 @@ type UiState = {
   /** Torrent currently shown in the panel (shared across views: when switching
    *  back from the mobile detail route to desktop, it continues into the panel) */
   detailHash: string | null;
+  /** Filter sidebar sections collapsed by clicking their header (category/tags/tracker) */
+  sidebarSectionsCollapsed: Record<string, boolean>;
   toggleSidebar: () => void;
   toggleStatusBar: () => void;
+  toggleSidebarSection: (id: string) => void;
   setColumnSizing: (sizing: Record<string, number>) => void;
   setColumnVisibility: (v: Record<string, boolean>) => void;
   setColumnOrder: (order: string[]) => void;
@@ -47,8 +50,16 @@ export const useUiStore = create<UiState>()(
       lastTorrentStatus: "all",
       detailPanelOpen: false,
       detailHash: null,
+      sidebarSectionsCollapsed: {},
       toggleSidebar: () => set((s) => ({ sidebarVisible: !s.sidebarVisible })),
       toggleStatusBar: () => set((s) => ({ statusBarVisible: !s.statusBarVisible })),
+      toggleSidebarSection: (id) =>
+        set((s) => ({
+          sidebarSectionsCollapsed: {
+            ...s.sidebarSectionsCollapsed,
+            [id]: !(s.sidebarSectionsCollapsed[id] ?? false),
+          },
+        })),
       setColumnSizing: (columnSizing) => set({ columnSizing }),
       setColumnVisibility: (columnVisibility) => set({ columnVisibility }),
       setColumnOrder: (columnOrder) => set({ columnOrder }),
@@ -69,6 +80,7 @@ export const useUiStore = create<UiState>()(
       partialize: (s) => ({
         sidebarVisible: s.sidebarVisible,
         statusBarVisible: s.statusBarVisible,
+        sidebarSectionsCollapsed: s.sidebarSectionsCollapsed,
         columnSizing: s.columnSizing,
         columnVisibility: s.columnVisibility,
         columnOrder: s.columnOrder,

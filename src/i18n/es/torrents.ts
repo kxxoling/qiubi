@@ -59,4 +59,9 @@ export default {
   "New Category": "Nueva categoría",
   "Edit Category": "Editar categoría",
   "Delete category confirm": '¿Eliminar la categoría "{name}"? Los torrents no se eliminarán.',
+  "Resume Torrents": "Reanudar torrents",
+  "Pause Torrents": "Pausar torrents",
+  "Remove Torrents": "Eliminar torrents",
+  "Remove Unused Categories": "Eliminar categorías sin usar",
+  "Delete Unused Tags": "Eliminar etiquetas sin usar",
 } satisfies Dictionary;

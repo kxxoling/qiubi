@@ -28,6 +28,71 @@ type Ctx = {
   onDone: () => void; // Clear the selection after the action completes
 };
 
+/**
+ * Delete confirmation with the qBT two-flavor choice (remove with / without
+ * files). Shared by the torrent list and the sidebar (category/tracker rows).
+ */
+export function DeleteConfirmDialog({
+  state,
+  setState,
+  onDone,
+}: {
+  state: DeleteDialogState;
+  setState: (s: DeleteDialogState) => void;
+  onDone?: () => void;
+}) {
+  const { t } = useTranslation();
+  const doAction = async (fn: () => Promise<void>, label: string) => {
+    try {
+      await fn();
+      toast.success(label);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    }
+  };
+
+  return (
+    <Dialog open={state.open} onOpenChange={(open) => setState({ ...state, open })}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t("Delete")}</DialogTitle>
+        </DialogHeader>
+        <p className="text-sm text-muted-foreground">
+          {t("Delete confirm", { count: state.hashes.length })}
+        </p>
+        <div className="mt-4 flex justify-end gap-2">
+          <Button variant="outline" onClick={() => setState({ hashes: [], open: false })}>
+            {t("Cancel")}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={async () => {
+              await doAction(() => qbtClient.deleteTorrents(state.hashes, false), t("Deleted"));
+              setState({ hashes: [], open: false });
+              onDone?.();
+            }}
+          >
+            {t("Delete")}
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={async () => {
+              await doAction(
+                () => qbtClient.deleteTorrents(state.hashes, true),
+                t("Deleted with files"),
+              );
+              setState({ hashes: [], open: false });
+              onDone?.();
+            }}
+          >
+            {t("Delete with files")}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function TorrentDialogs({
   deleteDialog,
   setDeleteDialog,
@@ -69,51 +134,7 @@ export function TorrentDialogs({
 
   return (
     <>
-      {/* Delete confirmation */}
-      <Dialog
-        open={deleteDialog.open}
-        onOpenChange={(open) => setDeleteDialog({ ...deleteDialog, open })}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t("Delete")}</DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            {t("Delete confirm", { count: deleteDialog.hashes.length })}
-          </p>
-          <div className="mt-4 flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setDeleteDialog({ hashes: [], open: false })}>
-              {t("Cancel")}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={async () => {
-                await doAction(
-                  () => qbtClient.deleteTorrents(deleteDialog.hashes, false),
-                  t("Deleted"),
-                );
-                setDeleteDialog({ hashes: [], open: false });
-                onDone();
-              }}
-            >
-              {t("Delete")}
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={async () => {
-                await doAction(
-                  () => qbtClient.deleteTorrents(deleteDialog.hashes, true),
-                  t("Deleted with files"),
-                );
-                setDeleteDialog({ hashes: [], open: false });
-                onDone();
-              }}
-            >
-              {t("Delete with files")}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <DeleteConfirmDialog state={deleteDialog} setState={setDeleteDialog} onDone={onDone} />
 
       {/* Rename */}
       <Dialog

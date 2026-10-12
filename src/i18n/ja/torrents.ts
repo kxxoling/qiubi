@@ -59,4 +59,9 @@ export default {
   "New Category": "新規カテゴリ",
   "Edit Category": "カテゴリを編集",
   "Delete category confirm": "カテゴリ「{name}」を削除しますか? トレントは削除されません。",
+  "Resume Torrents": "トレントを再開",
+  "Pause Torrents": "トレントを一時停止",
+  "Remove Torrents": "トレントを削除",
+  "Remove Unused Categories": "未使用のカテゴリを削除",
+  "Delete Unused Tags": "未使用のタグを削除",
 } satisfies Dictionary;
