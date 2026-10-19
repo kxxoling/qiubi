@@ -39,4 +39,7 @@ export default {
   "Copy Feed URL": "复制 RSS 源地址",
   "RSS hotkeys hint":
     "j/k 选择文章 · Shift+J/K 切换订阅源 · Enter 下载 · r 刷新 · Shift+R 全部刷新",
+  Title: "标题",
+  Date: "日期",
+  Read: "已读",
 } satisfies Dictionary;

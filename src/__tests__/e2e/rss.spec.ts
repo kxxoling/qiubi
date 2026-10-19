@@ -116,6 +116,53 @@ test("r refreshes the selected feed, Shift+R refreshes all", async ({ page }) =>
     .toEqual(["itemPath=TechBlog", "itemPath=TechBlog", "itemPath=News"]);
 });
 
+test("article table headers re-sort — status click puts unread first", async ({ page }) => {
+  // a read article NEWER than an unread one: only the status column
+  // discriminates them
+  const articles = [
+    {
+      id: "r1",
+      title: "Read and recent",
+      date: "19 May 2026 09:00:00 +0000",
+      link: "",
+      torrentURL: "magnet:?xt=r",
+      isRead: true,
+    },
+    {
+      id: "u1",
+      title: "Unread and older",
+      date: "18 May 2026 09:00:00 +0000",
+      link: "",
+      torrentURL: "magnet:?xt=u",
+    },
+  ];
+  await page.route("**/api/v2/rss/items*", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        TechBlog: { uid: "1", url: "https://tech.example.com/rss", title: "Tech Blog", articles },
+      }),
+    }),
+  );
+  // the beforeEach mock already served the initial load; pressing "r" makes
+  // the refresh poller re-fetch rss/items, which this override now serves
+  await feedRow(page).click();
+  await page.keyboard.press("r");
+
+  const options = () => page.locator('[role="option"]');
+  await expect(options()).toHaveCount(2);
+  // default order: date desc — the newer (read) article first
+  await expect(options().first()).toContainText("Read and recent");
+
+  // status column: first click sorts unread first
+  await page.getByRole("button", { name: "Status" }).click();
+  await expect(options().first()).toContainText("Unread and older");
+  // clicking the same column again toggles to read first
+  await page.getByRole("button", { name: "Status" }).click();
+  await expect(options().first()).toContainText("Read and recent");
+});
+
 test("Shift+J/Shift+K switch the selected feed", async ({ page }) => {
   await feedRow(page).click();
   const selectedTree = () => page.locator('[role="treeitem"][aria-selected="true"]');
