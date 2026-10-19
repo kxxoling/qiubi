@@ -42,4 +42,8 @@ export default {
   Title: "Título",
   Date: "Fecha",
   Read: "Leído",
+  "Feed failed to refresh — see the server execution log":
+    "El canal no se pudo actualizar — consulta el registro de ejecución del servidor",
+  Refreshing: "Actualizando…",
+  "{name} failed to refresh": "Error al actualizar {name}",
 } satisfies Dictionary;

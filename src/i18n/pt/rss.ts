@@ -42,4 +42,8 @@ export default {
   Title: "Título",
   Date: "Data",
   Read: "Lido",
+  "Feed failed to refresh — see the server execution log":
+    "O feed falhou ao atualizar — veja o log de execução do servidor",
+  Refreshing: "Atualizando…",
+  "{name} failed to refresh": "Falha ao atualizar {name}",
 } satisfies Dictionary;

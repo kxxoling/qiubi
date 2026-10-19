@@ -226,21 +226,39 @@ export function RssPage() {
   };
 
   /**
-   * qBT's refreshItem returns 200 immediately — the feed fetch happens
-   * server-side and shows up as isLoading on the feed. Poll until every
-   * watched feed stops loading (timeout 30s), then report per-feed errors.
+   * qBT's refreshItem is fire-and-forget — it 200s before the fetch even
+   * starts (and silently for an unknown itemPath), so the real outcome only
+   * exists afterwards on the feed object: isLoading while fetching, hasError
+   * when the last fetch/parse failed. Poll until every watched feed settles
+   * (timeout 30s), streaming each snapshot into the UI cache so per-feed
+   * spinners track progress (official-UI behavior); the caller judges
+   * hasError from the returned snapshot.
+   *
+   * A feed that was never seen busy isn't settled either: the snapshot may
+   * predate the server applying the refresh (or qBT deferred it behind feed
+   * initialization), and judging from that stale state reports success for
+   * fetches that fail right after — the exact false "Refreshed" toast this
+   * loop exists to prevent. Only trust "idle" once the feed was observed
+   * loading, or after a grace period covering the apply latency.
    */
   const waitForFeedsIdle = async (paths: string[]) => {
     const watched = new Set(paths);
-    const deadline = Date.now() + 30_000;
+    const startedAt = Date.now();
+    const deadline = startedAt + 30_000;
+    const seenBusy = new Set<string>();
     while (Date.now() < deadline) {
       const items = await qbtClient.getRssItems(true);
-      // stream every snapshot into the UI cache so each feed's spinner
-      // appears/clears as its own refresh finishes (official-UI behavior)
       qc.setQueryData(["rss-feeds"], items);
       const flat = flattenFeeds(items);
-      const busy = flat.filter((f) => watched.has(f.path) && f.feed.isLoading);
-      if (busy.length === 0) {
+      for (const f of flat) {
+        if (watched.has(f.path) && f.feed.isLoading) seenBusy.add(f.path);
+      }
+      const pending = flat.filter(
+        (f) =>
+          watched.has(f.path) &&
+          (f.feed.isLoading || (!seenBusy.has(f.path) && Date.now() - startedAt < 1500)),
+      );
+      if (pending.length === 0) {
         return flat.filter((f) => watched.has(f.path));
       }
       await new Promise((r) => setTimeout(r, 800));
@@ -250,40 +268,62 @@ export function RssPage() {
 
   const refreshOne = async (path: string) => {
     setRefreshingFeed(path);
+    // the settled outcome only lands after the poll loop — show a spinner
+    // toast immediately and swap it in place for the result
+    const toastId = toast.loading(t("Refreshing"));
     try {
       await qbtClient.refreshRssItem(path);
       const final = await waitForFeedsIdle([path]);
       await qc.invalidateQueries({ queryKey: ["rss-feeds"] });
       if (final === null) {
-        toast.error(t("Refresh timed out"));
-      } else if (final[0]?.feed.hasError) {
-        toast.error(t("Refresh failed"));
+        toast.error(t("Refresh timed out"), { id: toastId });
+      } else if (final[0]?.feed.hasError || final.length === 0) {
+        // hasError is the only outcome signal qBT exposes on the feed (and a
+        // vanished feed can never be confirmed refreshed — never report
+        // success for a refresh we can no longer see)
+        toast.error(t("Refresh failed"), { id: toastId });
       } else {
-        toast.success(t("Refreshed"));
+        toast.success(t("Refreshed"), { id: toastId });
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e));
+      toast.error(e instanceof Error ? e.message : String(e), { id: toastId });
     } finally {
       setRefreshingFeed(null);
     }
   };
 
   const refreshAll = async () => {
+    const toastId = toast.loading(t("Refreshing"));
     try {
-      // no server-side "refresh all": itemPath is required, so fan out
-      // over every feed and tolerate individual failures
-      await Promise.allSettled(feedOnly.map((f) => qbtClient.refreshRssItem(f.path)));
+      // no server-side "refresh all": itemPath is required, so fan out over
+      // every feed; individual POST failures (network/API-level) are still
+      // reported per feed below
+      const results = await Promise.allSettled(
+        feedOnly.map((f) => qbtClient.refreshRssItem(f.path)),
+      );
       const final = await waitForFeedsIdle(feedOnly.map((f) => f.path));
       await qc.invalidateQueries({ queryKey: ["rss-feeds"] });
       if (final === null) {
-        toast.error(t("Refresh timed out"));
+        toast.error(t("Refresh timed out"), { id: toastId });
         return;
       }
-      const errored = final.filter((f) => f.feed.hasError).length;
-      if (errored) toast.error(`${t("Refresh failed")} (${errored})`);
-      else toast.success(t("Refreshed"));
+      // one toast per failed feed (sonner's recommended pattern — every
+      // toast is one event): fetch failures, API-level POST rejections and
+      // feeds that vanished mid-refresh — hasError carries no reason, so
+      // the toasts say what failed, not why
+      const settled = new Map(final.map((f) => [f.path, f]));
+      let anyFailed = false;
+      for (const [i, f] of feedOnly.entries()) {
+        const done = settled.get(f.path);
+        if (!done || done.feed.hasError || results[i].status === "rejected") {
+          anyFailed = true;
+          toast.error(t("{name} failed to refresh", { name: f.path }));
+        }
+      }
+      if (anyFailed) toast.dismiss(toastId);
+      else toast.success(t("Refreshed"), { id: toastId });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e));
+      toast.error(e instanceof Error ? e.message : String(e), { id: toastId });
     }
   };
 
