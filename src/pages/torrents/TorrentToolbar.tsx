@@ -12,6 +12,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 export function TorrentToolbar({
   status,
   onStatusChange,
+  statusCounts,
   search,
   onSearchChange,
   selectedCount,
@@ -21,6 +22,8 @@ export function TorrentToolbar({
 }: {
   status: string;
   onStatusChange: (v: string | null) => void;
+  /** Per-status torrent counts shown in the select (see statusCounts()) */
+  statusCounts?: Record<string, number>;
   search: string;
   onSearchChange: (v: string) => void;
   selectedCount: number;
@@ -33,7 +36,7 @@ export function TorrentToolbar({
 
   return (
     <div className="flex shrink-0 flex-wrap items-center gap-2">
-      <StatusSelect value={status} onValueChange={onStatusChange} />
+      <StatusSelect value={status} onValueChange={onStatusChange} counts={statusCounts} />
       <Input
         value={search}
         onChange={(e) => onSearchChange(e.target.value)}

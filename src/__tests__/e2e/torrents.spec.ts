@@ -114,13 +114,25 @@ test("renders torrent table with 3 torrents", async ({ page }) => {
 
 test("filter by status via toolbar select (URL-driven)", async ({ page }) => {
   // Status filter is a toolbar dropdown; the selection is written into the URL
-  // (#/?status=downloading)
+  // (#/?status=downloading). Option labels carry per-status counts.
   await page.getByRole("combobox", { name: /Status/ }).click();
-  await page.getByRole("option", { name: "Downloading", exact: true }).click();
+  await page.getByRole("option", { name: "Downloading (1)" }).click();
   await expect(page.getByText("Ubuntu Desktop 24.04")).toBeVisible();
   await expect(page.getByText("Big Buck Bunny")).not.toBeVisible();
   // The filter state is in the URL: opening the URL with the param filters too
   await expect(page).toHaveURL(/status=downloading/);
+});
+
+test("status select shows per-status counts (official-UI style)", async ({ page }) => {
+  const trigger = page.getByRole("combobox", { name: /Status/ });
+  // 3 torrents: downloading / uploading / error — counts are whole-list
+  await expect(trigger).toContainText("All (3)");
+  await trigger.click();
+  await expect(page.getByRole("option", { name: "Seeding (1)" })).toBeVisible();
+  await expect(page.getByRole("option", { name: "Error (1)" })).toBeVisible();
+  await page.getByRole("option", { name: "Downloading (1)" }).click();
+  // the trigger repeats the selected status's count
+  await expect(trigger).toContainText("Downloading (1)");
 });
 
 test("search filters torrents by name", async ({ page }) => {

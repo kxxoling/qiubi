@@ -5,7 +5,7 @@
  * Status values are used directly as URL query params (#/?status=downloading);
  * labels are English-canonical, translated via i18n entries.
  */
-import type { TorrentState } from "@/types/qbt";
+import type { TorrentInfo, TorrentState } from "@/types/qbt";
 
 export type StatusFilterValue =
   | "all"
@@ -137,6 +137,22 @@ export function matchStatus(state: TorrentState, filter: string): boolean {
     default:
       return true;
   }
+}
+
+/** Per-status torrent counts for the filter select, keyed by StatusFilterValue
+ *  ("all" = the whole list). Uses matchStatus so the numbers always agree
+ *  with what selecting each option would show — computed client-side from
+ *  the shared sync/maindata poll, never an extra request. */
+export function statusCounts(torrents: TorrentInfo[] | undefined): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const o of STATUS_OPTIONS) counts[o.value] = 0;
+  for (const tr of torrents ?? []) {
+    for (const o of STATUS_OPTIONS) {
+      if (o.value !== "all" && matchStatus(tr.state, o.value)) counts[o.value]++;
+    }
+  }
+  counts.all = torrents?.length ?? 0;
+  return counts;
 }
 
 /**
