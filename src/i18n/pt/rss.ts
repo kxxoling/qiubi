@@ -39,4 +39,7 @@ export default {
   "Copy Feed URL": "Copiar URL do feed",
   "RSS hotkeys hint":
     "j/k escolher artigo · Shift+J/K trocar feed · Enter baixar · r atualizar · Shift+R atualizar tudo",
+  Title: "Título",
+  Date: "Data",
+  Read: "Lido",
 } satisfies Dictionary;

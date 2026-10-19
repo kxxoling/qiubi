@@ -39,4 +39,7 @@ export default {
   "Copy Feed URL": "Копировать ссылку на ленту",
   "RSS hotkeys hint":
     "j/k выбор статьи · Shift+J/K смена ленты · Enter скачать · r обновить · Shift+R обновить все",
+  Title: "Заголовок",
+  Date: "Дата",
+  Read: "Прочитано",
 } satisfies Dictionary;

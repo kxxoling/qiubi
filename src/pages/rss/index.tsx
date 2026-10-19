@@ -21,7 +21,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { pollWithBackoff } from "@/hooks/useMainDataSync";
 import type { AppPreferences, RssArticle, RssFeed } from "@/types/qbt";
-import { ArticleList } from "./ArticleList";
+import { ArticleList, type ArticleSort, sortArticles } from "./ArticleList";
 import { FeedTree, flattenFeeds } from "./FeedTree";
 
 /** Apply fn to the map that CONTAINS the feed/folder at `path` — used for
@@ -91,11 +91,15 @@ export function RssPage() {
 
   const selected = flat.find((x) => x.path === selectedFeed);
   const selectedArticles: RssArticle[] = selected?.feed.articles ?? [];
-  /** Newest-first — the exact order ArticleList renders; keyboard nav walks it */
+  /** Display order (date-desc by default; the article table headers can
+   *  re-sort) — the exact order ArticleList renders; keyboard nav walks it */
+  const [articleSort, setArticleSort] = useState<ArticleSort>({
+    key: "date",
+    dir: "desc",
+  });
   const sortedArticles = useMemo(
-    () =>
-      [...selectedArticles].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
-    [selectedArticles],
+    () => sortArticles(selectedArticles, articleSort),
+    [selectedArticles, articleSort],
   );
 
   // Keyboard selection tracks the visible list: switching feeds clears it
@@ -475,6 +479,8 @@ export function RssPage() {
         <ArticleList
           selectedFeed={selectedFeed}
           articles={sortedArticles}
+          sort={articleSort}
+          onSortChange={setArticleSort}
           selectedArticleId={selectedArticleId}
           onSelectArticle={setSelectedArticleId}
           onDownload={downloadArticle}

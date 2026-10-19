@@ -39,4 +39,7 @@ export default {
   "Copy Feed URL": "피드 URL 복사",
   "RSS hotkeys hint":
     "j/k 기사 선택 · Shift+J/K 피드 전환 · Enter 다운로드 · r 새로 고침 · Shift+R 모두 새로 고침",
+  Title: "제목",
+  Date: "날짜",
+  Read: "읽음",
 } satisfies Dictionary;
