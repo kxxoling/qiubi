@@ -13,7 +13,7 @@ import {
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { qbtClient } from "@/api/qbt";
 import { TorrentCardList } from "@/components/torrent/TorrentCardList";
@@ -26,6 +26,7 @@ import {
 import { useTorrentSelection } from "@/components/torrent/useTorrentSelection";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useTorrentList } from "@/hooks/useMainDataSync";
+import { statusCounts } from "@/lib/torrentStatus";
 import { cn } from "@/lib/utils";
 import { useUiStore } from "@/stores/ui";
 import { DEFAULT_COLUMN_VISIBILITY, useTorrentColumns } from "./torrents/columns";
@@ -182,6 +183,10 @@ export function TorrentList() {
     trackersMap: mainData?.trackers,
   });
 
+  // Official-UI style per-status counts for the toolbar select (whole list,
+  // not scoped by the other filters)
+  const statusCountMap = useMemo(() => statusCounts(torrents), [torrents]);
+
   const columns = useTorrentColumns();
 
   // Seed default column visibility on first render
@@ -330,6 +335,7 @@ export function TorrentList() {
           setLastTorrentStatus(v ?? "all");
           setUrlFilter({ status: v ?? "all" });
         }}
+        statusCounts={statusCountMap}
         search={search}
         onSearchChange={setSearch}
         selectedCount={selectedHashes.length}
