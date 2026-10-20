@@ -42,4 +42,7 @@ export default {
   Title: "标题",
   Date: "日期",
   Read: "已读",
+  "Feed failed to refresh — see the server execution log": "订阅源刷新失败 — 详情见服务端执行日志",
+  Refreshing: "正在刷新…",
+  "{name} failed to refresh": "{name} 刷新失败",
 } satisfies Dictionary;

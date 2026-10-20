@@ -42,4 +42,8 @@ export default {
   Title: "タイトル",
   Date: "日付",
   Read: "既読",
+  "Feed failed to refresh — see the server execution log":
+    "フィードの更新に失敗しました — サーバーの実行ログを確認してください",
+  Refreshing: "更新中…",
+  "{name} failed to refresh": "{name} の更新に失敗しました",
 } satisfies Dictionary;

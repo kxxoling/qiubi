@@ -1,4 +1,5 @@
 import {
+  AlertTriangle,
   CheckCheck,
   Copy,
   FolderOpen,
@@ -88,6 +89,11 @@ export function FeedTree({
                     role="treeitem"
                     tabIndex={0}
                     aria-selected={selectedFeed === path}
+                    title={
+                      !isFolder && feed.hasError
+                        ? t("Feed failed to refresh — see the server execution log")
+                        : undefined
+                    }
                     className={cn(
                       "group flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-1.5 text-[13px] transition-colors",
                       selectedFeed === path
@@ -104,6 +110,10 @@ export function FeedTree({
                   // per-feed fetching state from qBT (isLoading) — the official
                   // UI spins each feed's icon as its refresh completes
                   <Loader2 className="size-3.5 shrink-0 animate-spin text-muted-foreground" />
+                ) : feed.hasError ? (
+                  // qBT's last fetch/parse of this feed failed — stays until a
+                  // successful refresh (the official UI keeps the same mark)
+                  <AlertTriangle className="size-3.5 shrink-0 text-destructive" />
                 ) : (
                   // RSS brand orange — reads as an accent on every theme
                   <Rss

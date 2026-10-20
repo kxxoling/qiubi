@@ -163,6 +163,81 @@ test("article table headers re-sort — status click puts unread first", async (
   await expect(options().first()).toContainText("Read and recent");
 });
 
+test("refresh surfaces the backend failure state as an error toast", async ({ page }) => {
+  let refreshCount = 0;
+  let pollsAfterRefresh = 0;
+  await page.route("**/api/v2/rss/refreshItem", (route) => {
+    refreshCount++;
+    return route.fulfill({ status: 200, contentType: "application/json", body: "null" });
+  });
+  await page.route("**/api/v2/rss/items*", (route) => {
+    // stateful on purpose — the loading→error sequence after the POST is the
+    // scenario under test (everything else stays the constant beforeEach mock)
+    let body = JSON.stringify(mockFeeds);
+    if (refreshCount > 0) {
+      pollsAfterRefresh++;
+      const TechBlog =
+        pollsAfterRefresh === 1
+          ? { ...mockFeeds.TechBlog, isLoading: true }
+          : { ...mockFeeds.TechBlog, isLoading: false, hasError: true };
+      body = JSON.stringify({ ...mockFeeds, TechBlog });
+    }
+    return route.fulfill({ status: 200, contentType: "application/json", body });
+  });
+
+  await feedRow(page).click();
+  await page.keyboard.press("r");
+  const toast = page.locator("[data-sonner-toast]");
+  // a spinner toast shows immediately while the poll loop waits for the
+  // settle, then swaps in place for the outcome
+  await expect(toast).toContainText("Refreshing");
+  // hasError carries no reason — the failure toast is a bare title
+  await expect(toast.getByText("Refresh failed", { exact: true })).toBeVisible();
+  // the settled error state also marks the feed row persistently
+  await expect(feedRow(page)).toHaveAttribute(
+    "title",
+    "Feed failed to refresh — see the server execution log",
+  );
+});
+
+test("refresh-all fires one error toast per failed feed", async ({ page }) => {
+  let refreshes = 0;
+  let pollsAfterRefresh = 0;
+  await page.route("**/api/v2/rss/refreshItem", (route) => {
+    refreshes++;
+    return route.fulfill({ status: 200, contentType: "application/json", body: "null" });
+  });
+  await page.route("**/api/v2/rss/items*", (route) => {
+    // both feeds go loading → hasError after the refresh POSTs
+    let body = JSON.stringify(mockFeeds);
+    if (refreshes > 0) {
+      pollsAfterRefresh++;
+      const loading = pollsAfterRefresh === 1;
+      body = JSON.stringify({
+        TechBlog: { ...mockFeeds.TechBlog, isLoading: loading, hasError: !loading },
+        News: { ...mockFeeds.News, isLoading: loading, hasError: !loading },
+      });
+    }
+    return route.fulfill({ status: 200, contentType: "application/json", body });
+  });
+
+  // click first so the hotkey listener is mounted before Shift+R lands
+  await feedRow(page).click();
+  await page.keyboard.press("Shift+R");
+  // the spinner toast shows immediately, then makes way for per-feed results
+  await expect(page.locator("[data-sonner-toast]")).toContainText("Refreshing");
+  // one toast per failed feed, saying what failed (hasError has no reason
+  // attached — nothing more to display)
+  const toasts = page.locator("[data-sonner-toast]");
+  await expect(toasts).toHaveCount(2);
+  await expect(
+    page.locator("[data-sonner-toast]", { hasText: "TechBlog failed to refresh" }),
+  ).toBeVisible();
+  await expect(
+    page.locator("[data-sonner-toast]", { hasText: "News failed to refresh" }),
+  ).toBeVisible();
+});
+
 test("Shift+J/Shift+K switch the selected feed", async ({ page }) => {
   await feedRow(page).click();
   const selectedTree = () => page.locator('[role="treeitem"][aria-selected="true"]');

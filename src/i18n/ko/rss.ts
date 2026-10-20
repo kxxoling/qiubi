@@ -42,4 +42,8 @@ export default {
   Title: "제목",
   Date: "날짜",
   Read: "읽음",
+  "Feed failed to refresh — see the server execution log":
+    "피드 새로 고침 실패 — 서버 실행 로그를 확인하세요",
+  Refreshing: "새로 고치는 중…",
+  "{name} failed to refresh": "{name} 새로 고침 실패",
 } satisfies Dictionary;

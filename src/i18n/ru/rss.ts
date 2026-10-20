@@ -42,4 +42,8 @@ export default {
   Title: "Заголовок",
   Date: "Дата",
   Read: "Прочитано",
+  "Feed failed to refresh — see the server execution log":
+    "Не удалось обновить подписку — подробности в журнале сервера",
+  Refreshing: "Обновление…",
+  "{name} failed to refresh": "Не удалось обновить {name}",
 } satisfies Dictionary;
