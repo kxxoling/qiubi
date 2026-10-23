@@ -38,7 +38,7 @@ export default {
     "RSS отключён на сервере — включите в Настройки → RSS",
   "Copy Feed URL": "Копировать ссылку на ленту",
   "RSS hotkeys hint":
-    "j/k выбор статьи · Shift+J/K смена ленты · Enter скачать · r обновить · Shift+R обновить все",
+    "j/k выбор статьи · Shift+J/K смена ленты · Enter скачать · Shift+Enter быстрая загрузка · r обновить · Shift+R обновить все",
   Title: "Заголовок",
   Date: "Дата",
   Read: "Прочитано",
@@ -46,4 +46,5 @@ export default {
     "Не удалось обновить подписку — подробности в журнале сервера",
   Refreshing: "Обновление…",
   "{name} failed to refresh": "Не удалось обновить {name}",
+  "Quick Download": "Быстрая загрузка",
 } satisfies Dictionary;

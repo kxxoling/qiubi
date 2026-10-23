@@ -20,8 +20,9 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { pollWithBackoff } from "@/hooks/useMainDataSync";
+import { useUiStore } from "@/stores/ui";
 import type { AppPreferences, RssArticle, RssFeed } from "@/types/qbt";
-import { ArticleList, type ArticleSort, sortArticles } from "./ArticleList";
+import { ArticleList, sortArticles } from "./ArticleList";
 import { FeedTree, flattenFeeds } from "./FeedTree";
 
 /** Apply fn to the map that CONTAINS the feed/folder at `path` — used for
@@ -92,11 +93,11 @@ export function RssPage() {
   const selected = flat.find((x) => x.path === selectedFeed);
   const selectedArticles: RssArticle[] = selected?.feed.articles ?? [];
   /** Display order (date-desc by default; the article table headers can
-   *  re-sort) — the exact order ArticleList renders; keyboard nav walks it */
-  const [articleSort, setArticleSort] = useState<ArticleSort>({
-    key: "date",
-    dir: "desc",
-  });
+   *  re-sort) — the exact order ArticleList renders; keyboard nav walks it.
+   *  Lives in the persistent ui store so the choice survives page switches
+   *  and reloads, like the torrent table's sorting. */
+  const articleSort = useUiStore((s) => s.articleSort);
+  const setArticleSort = useUiStore((s) => s.setArticleSort);
   const sortedArticles = useMemo(
     () => sortArticles(selectedArticles, articleSort),
     [selectedArticles, articleSort],
@@ -223,6 +224,24 @@ export function RssPage() {
         </div>
       ),
     });
+  };
+
+  /** Context-menu "Quick Download": add the article's torrent with the
+   *  server's default parameters — no dialog round-trip. Counts as reading
+   *  like the dialog flow does. */
+  const quickDownloadArticle = async (article: RssArticle) => {
+    try {
+      await qbtClient.addTorrent({ urls: article.torrentURL || article.link });
+      toast.success(t("Added successfully"));
+      if (selectedFeed && !article.isRead) {
+        qbtClient
+          .markRssAsRead(selectedFeed, article.id)
+          .then(() => qc.invalidateQueries({ queryKey: ["rss-feeds"] }))
+          .catch(() => {});
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    }
   };
 
   /**
@@ -363,6 +382,7 @@ export function RssPage() {
     refreshOne,
     refreshAll,
     downloadArticle,
+    quickDownloadArticle,
     sortedArticles,
     feedPaths: [] as string[],
   });
@@ -370,6 +390,7 @@ export function RssPage() {
     refreshOne,
     refreshAll,
     downloadArticle,
+    quickDownloadArticle,
     sortedArticles,
     feedPaths: feedOnly.map((f) => f.path),
   };
@@ -415,7 +436,12 @@ export function RssPage() {
       }
       if (e.key === "Enter") {
         const article = hotkeyRef.current.sortedArticles.find((a) => a.id === selectedArticleId);
-        if (article) void hotkeyRef.current.downloadArticle(article);
+        // Enter opens the prefilled add dialog; Shift+Enter quick-downloads
+        // with server defaults, no dialog
+        if (article)
+          void (e.shiftKey
+            ? hotkeyRef.current.quickDownloadArticle(article)
+            : hotkeyRef.current.downloadArticle(article));
         return;
       }
       if (e.key !== "r" && e.key !== "R") return;
@@ -524,6 +550,7 @@ export function RssPage() {
           selectedArticleId={selectedArticleId}
           onSelectArticle={setSelectedArticleId}
           onDownload={downloadArticle}
+          onQuickDownload={quickDownloadArticle}
           onRefresh={refreshOne}
         />
       </div>

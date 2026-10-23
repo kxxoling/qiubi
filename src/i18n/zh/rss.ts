@@ -38,11 +38,12 @@ export default {
     "RSS 功能已在服务端关闭，请到 设置 → RSS 中开启",
   "Copy Feed URL": "复制 RSS 源地址",
   "RSS hotkeys hint":
-    "j/k 选择文章 · Shift+J/K 切换订阅源 · Enter 下载 · r 刷新 · Shift+R 全部刷新",
+    "j/k 选择文章 · Shift+J/K 切换订阅源 · Enter 下载 · Shift+Enter 快速下载 · r 刷新 · Shift+R 全部刷新",
   Title: "标题",
   Date: "日期",
   Read: "已读",
   "Feed failed to refresh — see the server execution log": "订阅源刷新失败 — 详情见服务端执行日志",
   Refreshing: "正在刷新…",
   "{name} failed to refresh": "{name} 刷新失败",
+  "Quick Download": "快速下载",
 } satisfies Dictionary;

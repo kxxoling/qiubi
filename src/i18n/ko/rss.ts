@@ -38,7 +38,7 @@ export default {
     "서버에서 RSS가 비활성되어 있습니다 — 설정 → RSS에서 활성화하세요",
   "Copy Feed URL": "피드 URL 복사",
   "RSS hotkeys hint":
-    "j/k 기사 선택 · Shift+J/K 피드 전환 · Enter 다운로드 · r 새로 고침 · Shift+R 모두 새로 고침",
+    "j/k 기사 선택 · Shift+J/K 피드 전환 · Enter 다운로드 · Shift+Enter 빠른 다운로드 · r 새로 고침 · Shift+R 모두 새로 고침",
   Title: "제목",
   Date: "날짜",
   Read: "읽음",
@@ -46,4 +46,5 @@ export default {
     "피드 새로 고침 실패 — 서버 실행 로그를 확인하세요",
   Refreshing: "새로 고치는 중…",
   "{name} failed to refresh": "{name} 새로 고침 실패",
+  "Quick Download": "빠른 다운로드",
 } satisfies Dictionary;

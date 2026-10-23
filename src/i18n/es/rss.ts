@@ -38,7 +38,7 @@ export default {
     "RSS está desactivado en el servidor — actívalo en Ajustes → RSS",
   "Copy Feed URL": "Copiar URL del canal",
   "RSS hotkeys hint":
-    "j/k elegir artículo · Shift+J/K cambiar fuente · Enter descargar · r actualizar · Shift+R actualizar todo",
+    "j/k elegir artículo · Shift+J/K cambiar fuente · Enter descargar · Shift+Enter descarga rápida · r actualizar · Shift+R actualizar todo",
   Title: "Título",
   Date: "Fecha",
   Read: "Leído",
@@ -46,4 +46,5 @@ export default {
     "El canal no se pudo actualizar — consulta el registro de ejecución del servidor",
   Refreshing: "Actualizando…",
   "{name} failed to refresh": "Error al actualizar {name}",
+  "Quick Download": "Descarga rápida",
 } satisfies Dictionary;

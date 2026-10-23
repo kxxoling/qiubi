@@ -38,7 +38,7 @@ export default {
     "RSS está desativado no servidor — ative em Configurações → RSS",
   "Copy Feed URL": "Copiar URL do feed",
   "RSS hotkeys hint":
-    "j/k escolher artigo · Shift+J/K trocar feed · Enter baixar · r atualizar · Shift+R atualizar tudo",
+    "j/k escolher artigo · Shift+J/K trocar feed · Enter baixar · Shift+Enter download rápido · r atualizar · Shift+R atualizar tudo",
   Title: "Título",
   Date: "Data",
   Read: "Lido",
@@ -46,4 +46,5 @@ export default {
     "O feed falhou ao atualizar — veja o log de execução do servidor",
   Refreshing: "Atualizando…",
   "{name} failed to refresh": "Falha ao atualizar {name}",
+  "Quick Download": "Download rápido",
 } satisfies Dictionary;
