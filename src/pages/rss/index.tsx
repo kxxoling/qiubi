@@ -20,8 +20,9 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { pollWithBackoff } from "@/hooks/useMainDataSync";
+import { useUiStore } from "@/stores/ui";
 import type { AppPreferences, RssArticle, RssFeed } from "@/types/qbt";
-import { ArticleList, type ArticleSort, sortArticles } from "./ArticleList";
+import { ArticleList, sortArticles } from "./ArticleList";
 import { FeedTree, flattenFeeds } from "./FeedTree";
 
 /** Apply fn to the map that CONTAINS the feed/folder at `path` — used for
@@ -92,11 +93,11 @@ export function RssPage() {
   const selected = flat.find((x) => x.path === selectedFeed);
   const selectedArticles: RssArticle[] = selected?.feed.articles ?? [];
   /** Display order (date-desc by default; the article table headers can
-   *  re-sort) — the exact order ArticleList renders; keyboard nav walks it */
-  const [articleSort, setArticleSort] = useState<ArticleSort>({
-    key: "date",
-    dir: "desc",
-  });
+   *  re-sort) — the exact order ArticleList renders; keyboard nav walks it.
+   *  Lives in the persistent ui store so the choice survives page switches
+   *  and reloads, like the torrent table's sorting. */
+  const articleSort = useUiStore((s) => s.articleSort);
+  const setArticleSort = useUiStore((s) => s.setArticleSort);
   const sortedArticles = useMemo(
     () => sortArticles(selectedArticles, articleSort),
     [selectedArticles, articleSort],

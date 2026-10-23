@@ -1,6 +1,7 @@
 import type { SortingState } from "@tanstack/react-table";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { ArticleSort } from "@/pages/rss/ArticleList";
 
 type UiState = {
   /** View menu: show/hide the filter sidebar */
@@ -15,6 +16,9 @@ type UiState = {
   columnOrder: string[];
   /** Torrent list sorting (header click), persisted across reloads */
   torrentSorting: SortingState;
+  /** RSS article table sorting (header click), persisted across reloads and
+   *  page switches — the same ArticleSort the article table sorts by */
+  articleSort: ArticleSort;
   /** Last status filter chosen in the toolbar; a fresh open without ?status=
    *  in the URL seeds the filter from it (explicit URLs always win) */
   lastTorrentStatus: string;
@@ -33,6 +37,7 @@ type UiState = {
   setColumnVisibility: (v: Record<string, boolean>) => void;
   setColumnOrder: (order: string[]) => void;
   setTorrentSorting: (updater: SortingState | ((prev: SortingState) => SortingState)) => void;
+  setArticleSort: (sort: ArticleSort) => void;
   setLastTorrentStatus: (status: string) => void;
   setDetailPanelOpen: (open: boolean) => void;
   setDetailHash: (hash: string | null) => void;
@@ -47,6 +52,7 @@ export const useUiStore = create<UiState>()(
       columnVisibility: {},
       columnOrder: [],
       torrentSorting: [],
+      articleSort: { key: "date", dir: "desc" },
       lastTorrentStatus: "all",
       detailPanelOpen: false,
       detailHash: null,
@@ -67,6 +73,7 @@ export const useUiStore = create<UiState>()(
         set((s) => ({
           torrentSorting: typeof updater === "function" ? updater(s.torrentSorting) : updater,
         })),
+      setArticleSort: (articleSort) => set({ articleSort }),
       setLastTorrentStatus: (lastTorrentStatus) => set({ lastTorrentStatus }),
       setDetailPanelOpen: (detailPanelOpen) => set({ detailPanelOpen }),
       setDetailHash: (detailHash) => set({ detailHash }),
@@ -85,6 +92,7 @@ export const useUiStore = create<UiState>()(
         columnVisibility: s.columnVisibility,
         columnOrder: s.columnOrder,
         torrentSorting: s.torrentSorting,
+        articleSort: s.articleSort,
         lastTorrentStatus: s.lastTorrentStatus,
         detailPanelOpen: s.detailPanelOpen,
       }),

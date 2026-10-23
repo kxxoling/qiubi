@@ -127,6 +127,31 @@ test("Shift+Enter on the selected article quick-downloads it", async ({ page }) 
   await expect(page.getByRole("dialog")).toBeHidden();
 });
 
+test("article sort survives switching pages and reloads", async ({ page }) => {
+  const options = () => page.locator('[role="option"]');
+  await feedRow(page).click();
+  await expect(options()).toHaveCount(2);
+  // default date-desc puts New Release first; sorting by title flips it
+  await expect(options().first()).toContainText("New Release v2.0");
+  await page.getByRole("button", { name: "Title" }).click();
+  await expect(options().first()).toContainText("Bug Fix v1.9");
+
+  // leave the RSS page and come back (hash navigation, no reload)
+  await page.evaluate(() => {
+    window.location.hash = "#/";
+  });
+  await page.evaluate(() => {
+    window.location.hash = "#/rss";
+  });
+  await expect(options()).toHaveCount(2);
+  await expect(options().first()).toContainText("Bug Fix v1.9");
+
+  // the choice also lives in the persisted ui store (survives reloads)
+  const stored = await page.evaluate(() => localStorage.getItem("qiubi-ui"));
+  expect(stored).toContain('"articleSort"');
+  expect(stored).toContain('"key":"title"');
+});
+
 test("add feed dialog opens", async ({ page }) => {
   await page.getByRole("button", { name: /Add Feed/i }).click();
   await expect(page.getByRole("heading", { name: /Add Feed/i })).toBeVisible();
