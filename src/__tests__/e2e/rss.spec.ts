@@ -112,6 +112,21 @@ test("quick download adds the torrent directly without the dialog", async ({ pag
   await expect(page.locator("[data-sonner-toast]").getByText("Added successfully")).toBeVisible();
 });
 
+test("Shift+Enter on the selected article quick-downloads it", async ({ page }) => {
+  let addBody = "";
+  await page.route("**/api/v2/torrents/add", (route) => {
+    addBody = route.request().postData() ?? "";
+    route.fulfill({ status: 200, body: "Ok." });
+  });
+
+  await feedRow(page).click();
+  await page.keyboard.press("j"); // select the first (unread) article
+  await page.keyboard.press("Shift+Enter");
+  await expect.poll(() => addBody).toContain("magnet:?xt=v2");
+  // still no dialog — Shift+Enter is the keyboard path of Quick Download
+  await expect(page.getByRole("dialog")).toBeHidden();
+});
+
 test("add feed dialog opens", async ({ page }) => {
   await page.getByRole("button", { name: /Add Feed/i }).click();
   await expect(page.getByRole("heading", { name: /Add Feed/i })).toBeVisible();

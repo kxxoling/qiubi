@@ -38,7 +38,7 @@ export default {
     "RSS 功能已在服務端關閉，請到 設定 → RSS 中開啟",
   "Copy Feed URL": "複製 RSS 來源網址",
   "RSS hotkeys hint":
-    "j/k 選擇文章 · Shift+J/K 切換訂閱源 · Enter 下載 · r 重新整理 · Shift+R 全部重新整理",
+    "j/k 選擇文章 · Shift+J/K 切換訂閱源 · Enter 下載 · Shift+Enter 快速下載 · r 重新整理 · Shift+R 全部重新整理",
   Title: "標題",
   Date: "日期",
   Read: "已讀",

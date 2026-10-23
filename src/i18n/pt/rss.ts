@@ -38,7 +38,7 @@ export default {
     "RSS está desativado no servidor — ative em Configurações → RSS",
   "Copy Feed URL": "Copiar URL do feed",
   "RSS hotkeys hint":
-    "j/k escolher artigo · Shift+J/K trocar feed · Enter baixar · r atualizar · Shift+R atualizar tudo",
+    "j/k escolher artigo · Shift+J/K trocar feed · Enter baixar · Shift+Enter download rápido · r atualizar · Shift+R atualizar tudo",
   Title: "Título",
   Date: "Data",
   Read: "Lido",

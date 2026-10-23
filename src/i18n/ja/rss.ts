@@ -38,7 +38,7 @@ export default {
     "サーバーで RSS が無効です — 設定 → RSS で有効にしてください",
   "Copy Feed URL": "フィードURLをコピー",
   "RSS hotkeys hint":
-    "j/k 記事を選択 · Shift+J/K フィード切替 · Enter ダウンロード · r 更新 · Shift+R すべて更新",
+    "j/k 記事を選択 · Shift+J/K フィード切替 · Enter ダウンロード · Shift+Enter クイックダウンロード · r 更新 · Shift+R すべて更新",
   Title: "タイトル",
   Date: "日付",
   Read: "既読",

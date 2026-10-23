@@ -381,6 +381,7 @@ export function RssPage() {
     refreshOne,
     refreshAll,
     downloadArticle,
+    quickDownloadArticle,
     sortedArticles,
     feedPaths: [] as string[],
   });
@@ -388,6 +389,7 @@ export function RssPage() {
     refreshOne,
     refreshAll,
     downloadArticle,
+    quickDownloadArticle,
     sortedArticles,
     feedPaths: feedOnly.map((f) => f.path),
   };
@@ -433,7 +435,12 @@ export function RssPage() {
       }
       if (e.key === "Enter") {
         const article = hotkeyRef.current.sortedArticles.find((a) => a.id === selectedArticleId);
-        if (article) void hotkeyRef.current.downloadArticle(article);
+        // Enter opens the prefilled add dialog; Shift+Enter quick-downloads
+        // with server defaults, no dialog
+        if (article)
+          void (e.shiftKey
+            ? hotkeyRef.current.quickDownloadArticle(article)
+            : hotkeyRef.current.downloadArticle(article));
         return;
       }
       if (e.key !== "r" && e.key !== "R") return;

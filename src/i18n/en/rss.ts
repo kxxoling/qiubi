@@ -38,7 +38,7 @@ export default {
     "RSS is disabled on the server — enable it in Settings → RSS",
   "Copy Feed URL": "Copy Feed URL",
   "RSS hotkeys hint":
-    "j/k select article · Shift+J/K switch feed · Enter download · r refresh · Shift+R refresh all",
+    "j/k select article · Shift+J/K switch feed · Enter download · Shift+Enter quick download · r refresh · Shift+R refresh all",
   Title: "Title",
   Date: "Date",
   Read: "Read",
