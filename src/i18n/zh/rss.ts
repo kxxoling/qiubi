@@ -45,4 +45,5 @@ export default {
   "Feed failed to refresh — see the server execution log": "订阅源刷新失败 — 详情见服务端执行日志",
   Refreshing: "正在刷新…",
   "{name} failed to refresh": "{name} 刷新失败",
+  "Quick Download": "快速下载",
 } satisfies Dictionary;

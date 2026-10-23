@@ -46,4 +46,5 @@ export default {
     "O feed falhou ao atualizar — veja o log de execução do servidor",
   Refreshing: "Atualizando…",
   "{name} failed to refresh": "Falha ao atualizar {name}",
+  "Quick Download": "Download rápido",
 } satisfies Dictionary;

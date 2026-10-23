@@ -46,4 +46,5 @@ export default {
     "Feed failed to refresh — see the server execution log",
   Refreshing: "Refreshing…",
   "{name} failed to refresh": "{name} failed to refresh",
+  "Quick Download": "Quick Download",
 } satisfies Dictionary;

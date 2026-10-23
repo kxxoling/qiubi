@@ -46,4 +46,5 @@ export default {
     "El canal no se pudo actualizar — consulta el registro de ejecución del servidor",
   Refreshing: "Actualizando…",
   "{name} failed to refresh": "Error al actualizar {name}",
+  "Quick Download": "Descarga rápida",
 } satisfies Dictionary;

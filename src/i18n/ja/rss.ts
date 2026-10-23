@@ -46,4 +46,5 @@ export default {
     "フィードの更新に失敗しました — サーバーの実行ログを確認してください",
   Refreshing: "更新中…",
   "{name} failed to refresh": "{name} の更新に失敗しました",
+  "Quick Download": "クイックダウンロード",
 } satisfies Dictionary;

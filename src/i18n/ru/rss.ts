@@ -46,4 +46,5 @@ export default {
     "Не удалось обновить подписку — подробности в журнале сервера",
   Refreshing: "Обновление…",
   "{name} failed to refresh": "Не удалось обновить {name}",
+  "Quick Download": "Быстрая загрузка",
 } satisfies Dictionary;

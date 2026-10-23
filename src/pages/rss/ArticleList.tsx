@@ -1,4 +1,4 @@
-import { ChevronRight, Download, ExternalLink, RefreshCw, Rss } from "lucide-react";
+import { ChevronRight, Download, ExternalLink, RefreshCw, Rss, Zap } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Shortcut } from "@/components/Shortcut";
@@ -67,13 +67,16 @@ interface ArticleListProps {
   /** Click / "Download" menu item → open the add-torrent dialog with article
    *  context */
   onDownload: (article: RssArticle) => void;
+  /** "Quick Download" menu item → add with server defaults, no dialog */
+  onQuickDownload: (article: RssArticle) => void;
   /** Refresh just the selected feed */
   onRefresh: (path: string) => void;
 }
 
 /** Right column: article table — sortable by title / date / read status.
  *  Click opens the add dialog (with article context); right-click /
- *  long-press menu offers download or opening the article's webpage. */
+ *  long-press menu offers download, quick download (server defaults, no
+ *  dialog) or opening the article's webpage. */
 export function ArticleList({
   selectedFeed,
   articles,
@@ -82,6 +85,7 @@ export function ArticleList({
   selectedArticleId,
   onSelectArticle,
   onDownload,
+  onQuickDownload,
   onRefresh,
 }: ArticleListProps) {
   const { t } = useTranslation();
@@ -234,6 +238,10 @@ export function ArticleList({
                       <ContextMenuItem onClick={() => onDownload(article)}>
                         <Download />
                         {t("Download")}
+                      </ContextMenuItem>
+                      <ContextMenuItem onClick={() => onQuickDownload(article)}>
+                        <Zap className="text-violet-600 dark:text-violet-400" />
+                        {t("Quick Download")}
                       </ContextMenuItem>
                       {article.link && (
                         <ContextMenuItem onClick={() => window.open(article.link, "_blank")}>

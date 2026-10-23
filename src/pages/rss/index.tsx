@@ -225,6 +225,24 @@ export function RssPage() {
     });
   };
 
+  /** Context-menu "Quick Download": add the article's torrent with the
+   *  server's default parameters — no dialog round-trip. Counts as reading
+   *  like the dialog flow does. */
+  const quickDownloadArticle = async (article: RssArticle) => {
+    try {
+      await qbtClient.addTorrent({ urls: article.torrentURL || article.link });
+      toast.success(t("Added successfully"));
+      if (selectedFeed && !article.isRead) {
+        qbtClient
+          .markRssAsRead(selectedFeed, article.id)
+          .then(() => qc.invalidateQueries({ queryKey: ["rss-feeds"] }))
+          .catch(() => {});
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    }
+  };
+
   /**
    * qBT's refreshItem is fire-and-forget — it 200s before the fetch even
    * starts (and silently for an unknown itemPath), so the real outcome only
@@ -524,6 +542,7 @@ export function RssPage() {
           selectedArticleId={selectedArticleId}
           onSelectArticle={setSelectedArticleId}
           onDownload={downloadArticle}
+          onQuickDownload={quickDownloadArticle}
           onRefresh={refreshOne}
         />
       </div>

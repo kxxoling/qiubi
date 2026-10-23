@@ -46,4 +46,5 @@ export default {
     "訂閱源重新整理失敗 — 詳情見伺服器執行記錄",
   Refreshing: "正在重新整理…",
   "{name} failed to refresh": "{name} 重新整理失敗",
+  "Quick Download": "快速下載",
 } satisfies Dictionary;

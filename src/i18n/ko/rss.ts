@@ -46,4 +46,5 @@ export default {
     "피드 새로 고침 실패 — 서버 실행 로그를 확인하세요",
   Refreshing: "새로 고치는 중…",
   "{name} failed to refresh": "{name} 새로 고침 실패",
+  "Quick Download": "빠른 다운로드",
 } satisfies Dictionary;

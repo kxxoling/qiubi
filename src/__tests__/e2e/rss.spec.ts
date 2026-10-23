@@ -92,6 +92,26 @@ test("clicking an article opens the add dialog with article context", async ({ p
   await expect.poll(() => addBody).toContain("magnet:?xt=v2");
 });
 
+test("quick download adds the torrent directly without the dialog", async ({ page }) => {
+  let addBody = "";
+  await page.route("**/api/v2/torrents/add", (route) => {
+    addBody = route.request().postData() ?? "";
+    route.fulfill({ status: 200, body: "Ok." });
+  });
+
+  await feedRow(page).click();
+  // real right-click: a plain Event has button undefined (fixtures README)
+  await page.getByText("New Release v2.0").evaluate((el) => {
+    el.dispatchEvent(new MouseEvent("contextmenu", { button: 2, bubbles: true }));
+  });
+  await page.getByRole("menuitem", { name: "Quick Download" }).click();
+  // POSTs the magnet straight away with server-default parameters
+  await expect.poll(() => addBody).toContain("magnet:?xt=v2");
+  // the add-torrent dialog never opens, and the flow reports success
+  await expect(page.getByRole("dialog")).toBeHidden();
+  await expect(page.locator("[data-sonner-toast]").getByText("Added successfully")).toBeVisible();
+});
+
 test("add feed dialog opens", async ({ page }) => {
   await page.getByRole("button", { name: /Add Feed/i }).click();
   await expect(page.getByRole("heading", { name: /Add Feed/i })).toBeVisible();
